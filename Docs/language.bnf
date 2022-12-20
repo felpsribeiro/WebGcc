@@ -1,0 +1,26 @@
+# Linguagem
+
+prog    ::= funcs
+
+funcs   ::= func funcs
+	      | NULL
+func    ::= type id() block
+
+block   ::= { stmts }
+
+
+stmts  ::= decl stmts
+	     | stmt stmts
+         | NULL
+
+decl   ::= type id index assign;
+index  ::= [ integer ]
+         | NULL
+assign ::= = bool
+	     | NULL
+
+stmt   ::= local = bool;
+         | if (bool) stmt
+         | while (bool) stmt
+         | do stmt while (bool);
+         | block
