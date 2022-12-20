@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.0.0)
+project(Tradutor)
+set(CMAKE_CXX_STANDARD 17)
+set(SOURCE_FILES Src/ast.cpp Src/checker.cpp Src/lexer.cpp Src/parser.cpp Src/symtable.cpp Src/functable Src/error.cpp Src/tradutor.cpp)
+add_executable(tradutor ${SOURCE_FILES})
