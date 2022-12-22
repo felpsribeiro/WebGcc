@@ -30,14 +30,13 @@ Node::Node(int t) : node_type(t) {}
 // Program
 // -------
 
-Program::Program(Function *f) : Node(NodeType::PROGRAM), funcs(f) {}
+Program::Program(Seq *f) : Node(NodeType::PROGRAM), funcs(f) {}
 
 // ---------
 // Function
 // ---------
 
 Function::Function() : Node(NodeType::FUNC) {}
-Function::Function(int type) : Node(type) {}
 Function::Function(Fun f, Statement *b)
     : Node(NodeType::FUNC), function(f), block(b) {}
 
@@ -54,12 +53,6 @@ Statement::Statement(int type) : Node(type) {}
 
 Expression::Expression(Token *t) : Node(NodeType::EXPR), type(ExprType::VOID), token(t) {}
 Expression::Expression(int ntype, int etype, Token *t) : Node(ntype), type(etype), token(t) {}
-
-// -------------
-// Functions Seq
-// -------------
-
-FuncSeq::FuncSeq(Function *f, Function *ff) : Function(NodeType::FUNCSEQ), func(f), funcs(ff) {}
 
 string Expression::Name()
 {
@@ -185,13 +178,13 @@ UnaryExpr::UnaryExpr(int etype, Token *t, Expression *e) : Expression(NodeType::
 // Block
 // -----
 
-Block::Block(Statement *s, SymMap t) : Statement(NodeType::BLOCK), seq(s), table(t) {}
+Block::Block(Seq *s, SymMap t) : Statement(NodeType::BLOCK), seq(s), table(t) {}
 
 // ----
 // Seq
 // ----
 
-Seq::Seq(Statement *s, Statement *ss) : Statement(NodeType::SEQ), stmt(s), stmts(ss) {}
+Seq::Seq(Node *e, Node *ee) : Node(NodeType::SEQ), elemt(e), elemts(ee) {}
 
 // ------
 // Assign
@@ -209,6 +202,12 @@ Assign::Assign(Expression *i, Expression *e) : Statement(NodeType::ASSIGN), id(i
         throw SyntaxError{scanner->Lineno(), ss.str()};
     }
 }
+
+// ----
+// Return
+// ----
+
+Return::Return(Expression *e) : Statement(NodeType::RETURN_STMT), expr(e) {}
 
 // ----
 // If

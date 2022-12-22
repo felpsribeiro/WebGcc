@@ -13,7 +13,6 @@ enum NodeType
     FUNC,
     STMT,
     EXPR,
-    FUNCSEQ,
     CONSTANT,
     IDENTIFIER,
     ACCESS,
@@ -24,6 +23,7 @@ enum NodeType
     BLOCK,
     SEQ,
     ASSIGN,
+    RETURN_STMT,
     IF_STMT,
     WHILE_STMT,
     DOWHILE_STMT
@@ -47,6 +47,12 @@ struct Node
     Node(int t);
 };
 
+struct Seq : public Node
+{
+    Node *elemt;
+    Node *elemts;
+    Seq(Node *e, Node *ee);
+};
 struct Statement : public Node
 {
     Statement();
@@ -109,39 +115,24 @@ struct UnaryExpr : public Expression
 
 struct Block : public Statement
 {
-    Statement *seq;
+    Seq *seq;
     SymMap table;
-    Block(Statement *s, SymMap t);
+    Block(Seq *s, SymMap t);
 };
 
 struct Function : public Node
 {
-    Fun function; // dados da função
+    Fun function;     // dados da função
     Statement *block; // instruções do corpo da função
 
     Function();
-    Function(int type);
     Function(Fun f, Statement *b);
-};
-
-struct FuncSeq : public Function
-{
-    Function *func;
-    Function *funcs;
-    FuncSeq(Function *f, Function *ff);
 };
 
 struct Program : public Node
 {
-    Function *funcs;
-    Program(Function *f);
-};
-
-struct Seq : public Statement
-{
-    Statement *stmt;
-    Statement *stmts;
-    Seq(Statement *s, Statement *ss);
+    Seq *funcs;
+    Program(Seq *f);
 };
 
 struct Assign : public Statement
@@ -149,6 +140,12 @@ struct Assign : public Statement
     Expression *id;
     Expression *expr;
     Assign(Expression *i, Expression *e);
+};
+
+struct Return : public Statement
+{
+    Expression *expr;
+    Return(Expression *e);
 };
 
 struct If : public Statement
