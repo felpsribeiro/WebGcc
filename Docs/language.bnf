@@ -1,26 +1,79 @@
 # Linguagem
 
-prog    ::= funcs
+prog        ::= funcs
 
-funcs   ::= func funcs
-	      | NULL
-func    ::= type id() block
+funcs       ::= func funcs
+              | NULL
+func        ::= type id(params) block
 
-block   ::= { stmts }
+params      ::= param tail
+tail        ::= , param tail
+              | NULL
+param       ::= type id
 
+block       ::= { stmts }
 
-stmts  ::= decl stmts
-	     | stmt stmts
-         | NULL
+stmts       ::= decl stmts
+	          | stmt stmts
+              | NULL
 
-decl   ::= type id index assign;
-index  ::= [ integer ]
-         | NULL
-assign ::= = bool
-	     | NULL
+decl        ::= type id index assign;
+index       ::= [ integer ]
+              | NULL
+assign      ::= = bool
+	          | NULL
 
-stmt   ::= local = bool;
-         | if (bool) stmt
-         | while (bool) stmt
-         | do stmt while (bool);
-         | block
+stmt        ::= local = bool;
+              | return bool;
+              | if (bool) stmt
+              | while (bool) stmt
+              | do stmt while (bool);
+              | block
+
+local       ::= id position
+position    ::= [bool]
+              | NULL
+
+bool        ::= join lor
+lor         ::= || join lor
+              | NULL
+
+join        ::= equality land
+land        ::= && equality land
+              | NULL
+
+equality    ::= rel eqdif
+eqdif       ::= == rel eqdif
+              | != rel eqdif
+              | NULL
+
+rel         ::= ari comp
+comp        ::= < ari comp
+              | <= ari comp
+              | > ari comp
+              | >= ari comp
+              | NULL
+
+ari         ::= term oper
+oper        ::= + term oper
+              | - term oper
+              | NULL
+
+term        ::= unary calc
+calc        ::= * unary calc
+              | / unary calc
+              | NULL
+
+unary       ::= !unary
+              | -unary
+              | factor
+
+factor      ::= (bool)
+              | local
+              | call
+              | integer
+              | real
+              | true
+              | false
+
+call        ::= id(params)
