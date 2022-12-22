@@ -1,17 +1,16 @@
 #ifndef COMPILER_SYMTABLE
 #define COMPILER_SYMTABLE
 
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 using std::string;
 using std::unordered_map;
 
 // modelo para símbolos
 struct Symbol
 {
-	string var;
-	string type;
-	int etype;
+	string name;
+	int type;
 };
 
 typedef unordered_map<string, Symbol> SymMap;
@@ -29,9 +28,7 @@ public:
 
 	bool Insert(string s, Symbol symb);
 	Symbol *Find(string s);
-	SymMap Table();
+	SymMap Table() { return table; };
 };
-
-inline SymMap SymTable::Table() { return table; }
 
 #endif
