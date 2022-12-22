@@ -15,6 +15,19 @@ void Tab()
         cout << "   ";
 }
 
+string ConvertType(int type)
+{
+    switch (type)
+    {
+    case ExprType::INT:
+        return "i32";
+    case ExprType::FLOAT:
+        return "f32";
+    default:
+        return "nulo";
+    }
+}
+
 void TestLexer()
 {
     Lexer scanner;
@@ -95,12 +108,6 @@ void Traverse(Node *n)
             Program *m = (Program *)n;
             Traverse(m->funcs);
             cout << ")" << endl;
-        }
-        case FUNCSEQ:
-        {
-            FuncSeq *f = (FuncSeq *)n;
-            Traverse(f->func);
-            Traverse(f->funcs);
             break;
         }
         case FUNC:
@@ -109,7 +116,16 @@ void Traverse(Node *n)
 
             depth++;
             Tab();
-            cout << "(func $" << f->function.name << endl;
+
+            // declara função e seu nome
+            cout << "(func $" << f->function.name;
+
+            // parâmetros da função
+            vector<Symbol> params = f->function.params;
+            for (auto v = params.begin(); v != params.end(); ++v)
+                cout << " (param $" << (*v).name << " " << ConvertType((*v).type) << ")";
+
+            cout << endl;
 
             depth++;
             Traverse(f->block);
@@ -130,21 +146,8 @@ void Traverse(Node *n)
             for (auto &local : b->table)
             {
                 Tab();
-                cout << "(local $" << local.second.var;
-
-                switch (local.second.etype)
-                {
-                case ExprType::INT:
-                {
-                    cout << " i32)" << endl;
-                    break;
-                }
-                case ExprType::FLOAT:
-                {
-                    cout << " f32)" << endl;
-                    break;
-                }
-                }
+                cout << "(local $" << local.second.name;
+                cout << " " << ConvertType(local.second.type) << ")" << endl;
             }
 
             Traverse(b->seq);
@@ -157,8 +160,8 @@ void Traverse(Node *n)
         case SEQ:
         {
             Seq *s = (Seq *)n;
-            Traverse(s->stmt);
-            Traverse(s->stmts);
+            Traverse(s->elemt);
+            Traverse(s->elemts);
             break;
         }
         case ASSIGN:
@@ -232,6 +235,12 @@ void Traverse(Node *n)
             cout << "[ ";
             Traverse(a->expr);
             cout << "] ";
+            break;
+        }
+        case RETURN_STMT:
+        {
+            Return *r = (Return *)n;
+            Traverse(r->expr);
             break;
         }
         case IF_STMT:
