@@ -3,9 +3,6 @@
 #include <iostream>
 #include <sstream>
 #include <cctype>
-using std::cin;
-using std::cout;
-using std::endl;
 using std::stringstream;
 
 extern Lexer *scanner;
@@ -13,63 +10,53 @@ extern Lexer *scanner;
 Program *Parser::Prog()
 {
     // prog -> funcs
-
-    // ------------------------------------
-    // tabela de funções com os seus nomes
-    // ------------------------------------
-    functable = new FuncTable();
-    // ------------------------------------
-
-    Function *funcs = Funcs();
-
-    // verifica se a função main foi declarada
-    Fun *f = functable->Find("main");
-    if (!f)
-    {
-        stringstream ss;
-        ss << "função 'main' não foi declarada";
-        throw SyntaxError{scanner->Lineno(), ss.str()};
-    }
-
-    return new Program(funcs);
+    return new Program(Funcs());
 }
 
-Function *Parser::Funcs()
+Seq *Parser::Funcs()
 {
     // funcs -> func funcs
     //        | empty
 
-    Function *funcseq = nullptr;
+    Seq *funcs = nullptr;
 
     if (lookahead->tag == Tag::TYPE)
     {
         // funcs -> func funcs
         Function *func = Func();
-        Function *funcs = Funcs();
-        funcseq = new FuncSeq(func, funcs);
+        Seq *seq = Funcs();
+        funcs = new Seq(func, seq);
     }
 
     // funcs -> empty
-    return funcseq;
+    return funcs;
 }
 
 Function *Parser::Func()
 {
-    // func  -> type id() block
+    // func  -> type id(params) block
 
     // captura nome do tipo de retorno
-    string type{lookahead->lexeme};
+    int rtr = ConvertToExprType(lookahead->lexeme);
     Match(Tag::TYPE);
 
     // captura nome da função
     string name{lookahead->lexeme};
     Match(Tag::ID);
 
-    // cria símbolo func
-    Fun f{name, type};
+    if (!Match('('))
+        throw SyntaxError(scanner->Lineno(), "\'(\' esperado");
 
-    // insere variável na tabela de funções
-    if (!functable->Insert(name, f))
+    vector<Symbol> params = Params();
+
+    if (!Match(')'))
+        throw SyntaxError(scanner->Lineno(), "\')\' esperado");
+
+    // cria símbolo func
+    Fun f{rtr, name, params};
+
+    // insere função na tabela de funções
+    if (!funcTable->Insert(name, f))
     {
         // a inserção falha quando a função já está na tabela
         stringstream ss;
@@ -77,32 +64,93 @@ Function *Parser::Func()
         throw SyntaxError(scanner->Lineno(), ss.str());
     }
 
-    if (!Match('('))
-        throw SyntaxError(scanner->Lineno(), "\'(\' esperado");
+    // ---------------------------------------
+    // nova tabela de símbolos para os parametros
+    // ---------------------------------------
+    paramTable = new SymTable();
+    // ---------------------------------------
 
-    if (!Match(')'))
-        throw SyntaxError(scanner->Lineno(), "\')\' esperado");
+    // insere variáveis dos parametros na tabela de símbolos
+    for (auto v = params.begin(); v != params.end(); ++v)
+        if (!paramTable->Insert((*v).name, *v))
+        {
+            // a inserção falha quando a variável já está na tabela
+            stringstream ss;
+            ss << "parâmetro \"" << (*v).name << "\" já definido";
+            throw SyntaxError(scanner->Lineno(), ss.str());
+        }
 
     Statement *block = Scope();
 
+    // ------------------
+    // remove tabela
+    // ------------------
+    delete paramTable;
+    // ------------------
+
     return new Function(f, block);
+}
+
+vector<Symbol> Parser::Params()
+{
+    // params  -> param tail
+    //          | empty
+    // tail    -> , param tail
+    //          | empty
+
+    vector<Symbol> p;
+
+    if (lookahead->tag != ')')
+    {
+        // params  -> param tail
+        p.push_back(Param());
+
+        while (lookahead->tag != ')')
+        {
+            // tail -> , param tail
+            if (!Match(','))
+                throw SyntaxError(scanner->Lineno(), "\',\' esperado");
+            p.push_back(Param());
+        }
+    }
+
+    // params -> empty
+    return p;
+}
+
+Symbol Parser::Param()
+{
+    // param -> type id
+
+    // captura o tipo do parâmetro
+    int type = ConvertToExprType(lookahead->lexeme);
+    if (!Match(Tag::TYPE))
+        throw SyntaxError(scanner->Lineno(), "esperado um tipo de variável válido.");
+
+    // captura o nome do parâmetro
+    string name{lookahead->lexeme};
+    if (!Match(Tag::ID))
+        throw SyntaxError(scanner->Lineno(), "esperado um nome de variável válido.");
+
+    return Symbol{name, type};
 }
 
 Statement *Parser::Scope()
 {
     // block -> { stmts }
-    if (!Match('{'))
-        throw SyntaxError(scanner->Lineno(), "\'{\' esperado");
 
     // ------------------------------------
     // nova tabela de símbolos para o bloco
     // ------------------------------------
-    SymTable *saved = symtable;
-    symtable = new SymTable(symtable);
+    SymTable *saved = varTable;
+    varTable = new SymTable(varTable);
     // ------------------------------------
 
-    Statement *sts = Stmts();
-    Statement *block = new Block(sts, symtable->Table());
+    if (!Match('{'))
+        throw SyntaxError(scanner->Lineno(), "\'{\' esperado");
+
+    Seq *sts = Stmts();
+    Statement *block = new Block(sts, varTable->Table());
 
     if (!Match('}'))
         throw SyntaxError(scanner->Lineno(), "\'}\' esperado");
@@ -110,8 +158,8 @@ Statement *Parser::Scope()
     // ------------------------------------------------------
     // tabela do escopo envolvente volta a ser a tabela ativa
     // ------------------------------------------------------
-    delete symtable;
-    symtable = saved;
+    delete varTable;
+    varTable = saved;
     // ------------------------------------------------------
 
     return block;
@@ -119,13 +167,13 @@ Statement *Parser::Scope()
 
 // ---------- Statements ----------
 
-Statement *Parser::Stmts()
+Seq *Parser::Stmts()
 {
     // stmts -> decl stmts
     //        | stmt stmts
     //        | empty
 
-    Statement *seq = nullptr;
+    Seq *stmts = nullptr;
 
     switch (lookahead->tag)
     {
@@ -133,31 +181,33 @@ Statement *Parser::Stmts()
     case Tag::TYPE:
     {
         Statement *st = Decl();
-        Statement *sts = Stmts();
-        seq = new Seq(st, sts);
+        Seq *sts = Stmts();
+        stmts = new Seq(st, sts);
         break;
     }
     // stmts -> stmt stmts
     case Tag::ID:
+    case Tag::RETURN:
     case Tag::IF:
     case Tag::WHILE:
     case Tag::DO:
     case '{':
     {
         Statement *st = Stmt();
-        Statement *sts = Stmts();
-        seq = new Seq(st, sts);
+        Seq *sts = Stmts();
+        stmts = new Seq(st, sts);
         break;
     }
     }
 
     // stmts -> empty
-    return seq;
+    return stmts;
 }
 
 Statement *Parser::Stmt()
 {
     // stmt  -> local = bool;
+    //        | return bool;
     //        | if (bool) stmt
     //        | while (bool) stmt
     //        | do stmt while (bool);
@@ -167,6 +217,7 @@ Statement *Parser::Stmt()
 
     switch (lookahead->tag)
     {
+
     // stmt -> local = bool;
     case Tag::ID:
     {
@@ -183,6 +234,22 @@ Statement *Parser::Stmt()
         {
             stringstream ss;
             ss << "esperado ; no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+        return stmt;
+    }
+
+    // stmt -> return bool;
+    case Tag::RETURN:
+    {
+        Match(Tag::RETURN);
+
+        Expression *right = Bool();
+        stmt = new Return(right);
+        if (!Match(';'))
+        {
+            stringstream ss;
+            ss << "esperado ';' no lugar de  \'" << lookahead->lexeme << "\'.";
             throw SyntaxError{scanner->Lineno(), ss.str()};
         }
         return stmt;
@@ -294,25 +361,31 @@ Statement *Parser::Decl()
 
     Statement *stmt = nullptr;
 
-    // captura nome do tipo
-    string type{lookahead->lexeme};
+    // captura o tipo
+    int type = ConvertToExprType(lookahead->lexeme);
     Match(Tag::TYPE);
-
-    int etype = ConvertToExprType(type);
 
     // captura nome do identificador
     string name{lookahead->lexeme};
     Match(Tag::ID);
 
+    // verifica se o nome da variável já existe como um parâmetro
+    if (paramTable->Find(name))
+    {
+        stringstream ss;
+        ss << "variável \"" << name << "\" já definida como um parâmetro.";
+        throw SyntaxError(scanner->Lineno(), ss.str());
+    }
+
     // cria símbolo
-    Symbol s{name, type, etype};
+    Symbol s{name, type};
 
     // insere variável na tabela de símbolos
-    if (!symtable->Insert(name, s))
+    if (!varTable->Insert(name, s))
     {
         // a inserção falha quando a variável já está na tabela
         stringstream ss;
-        ss << "variável \"" << name << "\" já definida";
+        ss << "variável \"" << name << "\" já definida.";
         throw SyntaxError(scanner->Lineno(), ss.str());
     }
 
@@ -336,11 +409,8 @@ Statement *Parser::Decl()
     // verifica se tem atribuição
     if (Match('='))
     {
-        int etype = ConvertToExprType(type);
-        Expression *left = new Identifier(etype, new Token{Tag::ID, name});
-
+        Expression *left = new Identifier(type, new Token{Tag::ID, name});
         Expression *right = Bool();
-
         stmt = new Assign(left, right);
     }
 
@@ -368,26 +438,30 @@ Expression *Parser::Local()
     {
     case Tag::ID:
     {
-        // verifica tipo da variável na tabela de símbolos
-        Symbol *s = symtable->Find(lookahead->lexeme);
+        Symbol *s = nullptr;
+
+        // verifica se a variável existe na tabela de varaiveis
+        s = varTable->Find(lookahead->lexeme);
         if (!s)
         {
-            stringstream ss;
-            ss << "variável \"" << lookahead->lexeme << "\" não declarada";
-            throw SyntaxError{scanner->Lineno(), ss.str()};
+            // verifica se a variável existe na tabela de parâmetros
+            s = paramTable->Find(lookahead->lexeme);
+            if (!s)
+            {
+                stringstream ss;
+                ss << "variável \"" << lookahead->lexeme << "\" não declarada";
+                throw SyntaxError{scanner->Lineno(), ss.str()};
+            }
         }
 
-        // identifica o tipo da expressão
-        int etype = ConvertToExprType(s->type);
-
         // identificador
-        expr = new Identifier(etype, new Token{*lookahead});
+        expr = new Identifier(s->type, new Token{*lookahead});
         Match(Tag::ID);
 
         // acesso a elemento de um arranjo
         if (Match('['))
         {
-            expr = new Access(etype, new Token{*lookahead}, expr, Bool());
+            expr = new Access(s->type, new Token{*lookahead}, expr, Bool());
 
             if (!Match(']'))
             {
@@ -746,10 +820,27 @@ bool Parser::Match(int tag)
 Parser::Parser()
 {
     lookahead = scanner->Scan();
-    symtable = nullptr;
+    varTable = nullptr;
 }
 
 Node *Parser::Start()
 {
-    return Prog();
+    // ------------------------------------
+    // tabela de funções com os seus nomes
+    // ------------------------------------
+    funcTable = new FuncTable();
+    // ------------------------------------
+
+    Program *prog = Prog();
+
+    // verifica se a função main foi declarada
+    Fun *f = funcTable->Find("main");
+    if (!f)
+    {
+        stringstream ss;
+        ss << "função 'main' não foi declarada";
+        throw SyntaxError{scanner->Lineno(), ss.str()};
+    }
+
+    return prog;
 }
