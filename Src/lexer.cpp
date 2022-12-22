@@ -5,20 +5,21 @@ using std::stringstream;
 
 extern std::ifstream fin;
 
-// construtor 
+// construtor
 Lexer::Lexer()
 {
 	// insere palavras-reservadas na tabela
-	//token_table["main"]  = Token{ Tag::MAIN, "main" };
-	token_table["int"]   = Token{ Tag::TYPE, "int" };
-	token_table["float"] = Token{ Tag::TYPE, "float" };
-	token_table["bool"] = Token{ Tag::TYPE, "bool" };
-	token_table["true"]  = Token{ Tag::TRUE, "true" };
-	token_table["false"] = Token{ Tag::FALSE, "false" };
-	token_table["if"]    = Token{ Tag::IF,    "if" };
-	token_table["while"] = Token{ Tag::WHILE, "while" };
-	token_table["do"]    = Token{ Tag::DO,    "do" };
-	
+	// token_table["main"]  = Token{ Tag::MAIN, "main" };
+	token_table["int"] 		= Token{Tag::TYPE, "int"};
+	token_table["float"] 	= Token{Tag::TYPE, "float"};
+	token_table["bool"] 	= Token{Tag::TYPE, "bool"};
+	token_table["true"] 	= Token{Tag::TRUE, "true"};
+	token_table["false"] 	= Token{Tag::FALSE, "false"};
+	token_table["if"] 		= Token{Tag::IF, "if"};
+	token_table["while"] 	= Token{Tag::WHILE, "while"};
+	token_table["do"] 		= Token{Tag::DO, "do"};
+	token_table["return"] 	= Token{Tag::RETURN, "return"};
+
 	// inicia leitura da entrada
 	peek = fin.get();
 }
@@ -30,7 +31,7 @@ int Lexer::Lineno()
 }
 
 // retorna tokens para o analisador sintático
-Token * Lexer::Scan()
+Token *Lexer::Scan()
 {
 	// ignora espaços em branco, tabulações e novas linhas
 	while (isspace(peek))
@@ -49,14 +50,14 @@ Token * Lexer::Scan()
 			// ignora caracteres até o fim da linha
 			do
 				peek = fin.get();
-			while(peek != '\n');
+			while (peek != '\n');
 			line += 1;
 			peek = fin.get();
 		}
 		else if (peek == '*')
 		{
-			// ignora caracteres até achar */ ou EOF				
-			while( (peek=fin.get()) != '*' ||  (peek=fin.get()) != '/' )
+			// ignora caracteres até achar */ ou EOF
+			while ((peek = fin.get()) != '*' || (peek = fin.get()) != '/')
 			{
 				if (peek == '\n')
 				{
@@ -64,11 +65,11 @@ Token * Lexer::Scan()
 				}
 				else if (peek == EOF)
 				{
-					token = Token {EOF};
+					token = Token{EOF};
 					return &token;
 				}
 			}
-			peek = fin.get();	
+			peek = fin.get();
 		}
 		else
 		{
@@ -92,10 +93,10 @@ Token * Lexer::Scan()
 	{
 		// ponto-flutuante não foi encontrado
 		bool dot = false;
-		
+
 		// acumula dígitos do número
 		stringstream ss;
-		do 
+		do
 		{
 			if (peek == '.')
 			{
@@ -107,14 +108,13 @@ Token * Lexer::Scan()
 				else
 				{
 					// segundo ponto encontrado
-					break; 
+					break;
 				}
 			}
 
 			ss << peek;
 			peek = fin.get();
-		} 
-		while (isdigit(peek) || peek == '.');
+		} while (isdigit(peek) || peek == '.');
 
 		// se o número é um ponto-flutuante
 		if (dot)
@@ -133,12 +133,11 @@ Token * Lexer::Scan()
 	if (isalpha(peek))
 	{
 		stringstream ss;
-		do 
+		do
 		{
 			ss << peek;
 			peek = fin.get();
-		} 
-		while (isalpha(peek));
+		} while (isalpha(peek));
 
 		string s = ss.str();
 		auto pos = token_table.find(s);
@@ -152,7 +151,7 @@ Token * Lexer::Scan()
 		}
 
 		// se o lexema ainda não está na tabela
-		Token t {Tag::ID, s};
+		Token t{Tag::ID, s};
 		token_table[s] = t;
 
 		// retorna o token ID
@@ -161,103 +160,103 @@ Token * Lexer::Scan()
 	}
 
 	// retorna operadores com mais de um caractere: >=, <=, == e !=
-	switch(peek)
+	switch (peek)
 	{
-		case '&':
+	case '&':
+	{
+		char next = fin.get();
+		if (next == '&')
 		{
-			char next = fin.get();
-			if (next == '&')
-			{
-				peek = fin.get();
-				token = Token{Tag::AND, "&&"};
-				return &token;
-			}
-			else
-			{
-				fin.unget();
-			}
+			peek = fin.get();
+			token = Token{Tag::AND, "&&"};
+			return &token;
 		}
-		break;
+		else
+		{
+			fin.unget();
+		}
+	}
+	break;
 
-		case '|':
+	case '|':
+	{
+		char next = fin.get();
+		if (next == '|')
 		{
-			char next = fin.get();
-			if (next == '|')
-			{
-				peek = fin.get();
-				token = Token{Tag::OR, "||"};
-				return &token;
-			}
-			else
-			{
-				fin.unget();
-			}
+			peek = fin.get();
+			token = Token{Tag::OR, "||"};
+			return &token;
 		}
-		break;
+		else
+		{
+			fin.unget();
+		}
+	}
+	break;
 
-		case '>':
+	case '>':
+	{
+		char next = fin.get();
+		if (next == '=')
 		{
-			char next = fin.get();
-			if (next == '=')
-			{
-				peek = fin.get();
-				token = Token{Tag::GTE, ">="};
-				return &token;
-			}
-			else
-			{
-				fin.unget();
-			}
+			peek = fin.get();
+			token = Token{Tag::GTE, ">="};
+			return &token;
 		}
-		break;
+		else
+		{
+			fin.unget();
+		}
+	}
+	break;
 
-		case '<':
+	case '<':
+	{
+		char next = fin.get();
+		if (next == '=')
 		{
-			char next = fin.get();
-			if (next == '=')
-			{
-				peek = fin.get();
-				token = Token{Tag::LTE, "<="};
-				return &token;
-			}
-			else
-			{
-				fin.unget();
-			}
+			peek = fin.get();
+			token = Token{Tag::LTE, "<="};
+			return &token;
 		}
-		break;
+		else
+		{
+			fin.unget();
+		}
+	}
+	break;
 
-		case '=':
+	case '=':
+	{
+		char next = fin.get();
+		if (next == '=')
 		{
-			char next = fin.get();
-			if (next == '=')
-			{
-				peek = fin.get();
-				token = Token{Tag::EQ, "=="};
-				return &token;
-			}
-			else
-			{
-				fin.unget();
-			}
+			peek = fin.get();
+			token = Token{Tag::EQ, "=="};
+			return &token;
 		}
-		break;
+		else
+		{
+			fin.unget();
+		}
+	}
+	break;
 
-		case '!':
+	case '!':
+	{
+		char next = fin.get();
+		if (next == '=')
 		{
-			char next = fin.get();
-			if (next == '=')
-			{
-				peek = fin.get();
-				token = Token{Tag::NEQ, "!="};
-				return &token;	
-			}
-			else
-			{
-				fin.unget();
-			}
+			peek = fin.get();
+			token = Token{Tag::NEQ, "!="};
+			return &token;
 		}
-		break;
+		else
+		{
+			fin.unget();
+		}
+	}
+	break;
 	}
 
 	// retorna caracteres não alphanuméricos isolados: (, ), +, -, etc.
