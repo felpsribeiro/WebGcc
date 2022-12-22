@@ -1,33 +1,35 @@
 #ifndef COMPILER_FUNCTABLE
 #define COMPILER_FUNCTABLE
 
-#include <unordered_map>
+#include "symtable.h"
 #include <string>
-using std::unordered_map;
+#include <unordered_map>
+#include <vector>
 using std::string;
+using std::unordered_map;
+using std::vector;
 
-
-// modelo para símbolos
+// modelo para funções
 struct Fun
 {
+	int rtr;
 	string name;
-	string rtr;
+	vector<Symbol> params;
 };
 
-
-// tabela de símbolos
+// tabela de funções
 class FuncTable
 {
-private: 
-   	unordered_map<string,Fun> table;    
-   	FuncTable * prev;   
+private:
+	unordered_map<string, Fun> table;
+	FuncTable *prev;
 
 public:
 	FuncTable();
-	FuncTable(FuncTable * t);
-	
+	FuncTable(FuncTable *t);
+
 	bool Insert(string n, Fun fun);
-	Fun * Find(string n); 
+	Fun *Find(string n);
 };
 
 #endif
