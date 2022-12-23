@@ -425,19 +425,15 @@ Statement *Parser::Decl()
 
 Expression *Parser::Local()
 {
-    // local -> local[bool]
-    //        | id
+    // local    -> id position
+    // position -> [bool]
+    //           | empty
 
-    Expression *expr = nullptr;
-
-    switch (lookahead->tag)
+    // local    -> id position
+    if (lookahead->tag == Tag::ID)
     {
-    case Tag::ID:
-    {
-        Symbol *s = nullptr;
-
         // verifica se a variável existe na tabela de varaiveis
-        s = varTable->Find(lookahead->lexeme);
+        Symbol *s = varTable->Find(lookahead->lexeme);
         if (!s)
         {
             // verifica se a variável existe na tabela de parâmetros
@@ -451,10 +447,11 @@ Expression *Parser::Local()
         }
 
         // identificador
-        expr = new Identifier(s->type, new Token{*lookahead});
+        Expression *expr = new Identifier(s->type, new Token{*lookahead});
         Match(Tag::ID);
 
-        // acesso a elemento de um arranjo
+        // position -> [bool]
+        //           | empty
         if (Match('['))
         {
             expr = new Access(s->type, new Token{*lookahead}, expr, Bool());
@@ -466,17 +463,15 @@ Expression *Parser::Local()
                 throw SyntaxError{scanner->Lineno(), ss.str()};
             }
         }
-        break;
+
+        return expr;
     }
-    default:
+    else
     {
         stringstream ss;
         ss << "esperado um local de armazenamento (variável ou arranjo)";
         throw SyntaxError{scanner->Lineno(), ss.str()};
     }
-    }
-
-    return expr;
 }
 
 Expression *Parser::Bool()
