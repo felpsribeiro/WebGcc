@@ -118,13 +118,13 @@ void Traverse(Node *n)
             Tab();
 
             // declara função e seu nome
-            cout << "(func $" << f->function.name;
+            cout << "(func $" << f->name;
 
             // parâmetros da função
-            vector<Symbol> params = f->function.params;
-            for (auto v = params.begin(); v != params.end(); ++v)
-                cout << " (param $" << (*v).name << " " << ConvertType((*v).type) << ")";
+            Traverse(f->params);
 
+            if (f->type != ExprType::VOID)
+                cout << " (result " << ConvertType(f->type) << ")";
             cout << endl;
 
             depth++;
@@ -134,6 +134,12 @@ void Traverse(Node *n)
             Tab();
             cout << ")" << endl;
             depth--;
+            break;
+        }
+        case PARAM:
+        {
+            Param *p = (Param *)n;
+            cout << " (param $" << p->name << " " << ConvertType(p->type) << ")";
             break;
         }
         case BLOCK:
@@ -235,6 +241,14 @@ void Traverse(Node *n)
             cout << "[ ";
             Traverse(a->expr);
             cout << "] ";
+            break;
+        }
+        case CALL:
+        {
+            CallFunc *a = (CallFunc *)n;
+            Traverse(a->args);
+            Tab();
+            cout << "call $" << a->token->lexeme << endl;
             break;
         }
         case RETURN_STMT:
