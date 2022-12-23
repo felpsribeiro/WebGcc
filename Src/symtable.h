@@ -9,8 +9,8 @@ using std::unordered_map;
 // modelo para símbolos
 struct Symbol
 {
-	string name;
 	int type;
+	string name;
 };
 
 typedef unordered_map<string, Symbol> SymMap;
