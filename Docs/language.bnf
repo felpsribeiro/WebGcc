@@ -7,6 +7,7 @@ funcs       ::= func funcs
 func        ::= type id(params) block
 
 params      ::= param tail
+              | NULL
 tail        ::= , param tail
               | NULL
 param       ::= type id
@@ -69,11 +70,15 @@ unary       ::= !unary
               | factor
 
 factor      ::= (bool)
-              | local
               | call
+              | local
               | integer
               | real
               | true
               | false
 
-call        ::= id(params)
+call        ::= id(args)
+args        ::= bool tailAr
+              | NULL
+tailAr      ::= , bool tailAr
+              | NULL
