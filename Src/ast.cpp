@@ -37,8 +37,15 @@ Program::Program(Seq *f) : Node(NodeType::PROGRAM), funcs(f) {}
 // ---------
 
 Function::Function() : Node(NodeType::FUNC) {}
-Function::Function(Fun f, Statement *b)
-    : Node(NodeType::FUNC), function(f), block(b) {}
+Function::Function(int t, string n, Seq *pp, Statement *b)
+    : Node(NodeType::FUNC), type(t), name(n), params(pp), block(b) {}
+
+// ---------
+// Param
+// ---------
+
+Param::Param(int t, string n) : Node(NodeType::PARAM), type(t), name(n) {}
+Param::Param(int t, int v) : Node(NodeType::PARAM), type(t), valor(v) {}
 
 // ---------
 // Statement
@@ -52,7 +59,7 @@ Statement::Statement(int type) : Node(type) {}
 // ----------
 
 Expression::Expression(Token *t) : Node(NodeType::EXPR), type(ExprType::VOID), token(t) {}
-Expression::Expression(int ntype, int etype, Token *t) : Node(ntype), type(etype), token(t) {}
+Expression::Expression(int ntype, int type, Token *t) : Node(ntype), type(type), token(t) {}
 
 string Expression::Name()
 {
@@ -174,6 +181,12 @@ UnaryExpr::UnaryExpr(int etype, Token *t, Expression *e) : Expression(NodeType::
     }
 }
 
+// -------------
+// Call Function
+// -------------
+
+CallFunc::CallFunc(int type, string n, Seq *aa) : Expression(NodeType::CALL, type, new Token(Tag::ID, n)), args(aa) {}
+
 // -----
 // Block
 // -----
@@ -184,7 +197,7 @@ Block::Block(Seq *s, SymMap t) : Statement(NodeType::BLOCK), seq(s), table(t) {}
 // Seq
 // ----
 
-Seq::Seq(Node *e, Node *ee) : Node(NodeType::SEQ), elemt(e), elemts(ee) {}
+Seq::Seq(Node *e, Seq *ee) : Node(NodeType::SEQ), elemt(e), elemts(ee) {}
 
 // ------
 // Assign

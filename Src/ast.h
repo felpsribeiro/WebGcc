@@ -4,13 +4,14 @@
 
 #include "lexer.h"
 #include "symtable.h"
-#include "functable.h"
 
 enum NodeType
 {
     UNKNOWN,
     PROGRAM,
     FUNC,
+    CALL,
+    PARAM,
     STMT,
     EXPR,
     CONSTANT,
@@ -50,9 +51,10 @@ struct Node
 struct Seq : public Node
 {
     Node *elemt;
-    Node *elemts;
-    Seq(Node *e, Node *ee);
+    Seq *elemts;
+    Seq(Node *e, Seq *ee);
 };
+
 struct Statement : public Node
 {
     Statement();
@@ -63,8 +65,9 @@ struct Expression : public Node
 {
     int type;
     Token *token;
+
     Expression(Token *t);
-    Expression(int ntype, int etype, Token *t);
+    Expression(int ntype, int type, Token *t);
     string Name();
     string Type();
 };
@@ -113,6 +116,13 @@ struct UnaryExpr : public Expression
     UnaryExpr(int etype, Token *t, Expression *e);
 };
 
+struct CallFunc : public Expression
+{
+    Seq *args;
+
+    CallFunc(int type, string n, Seq *aa);
+};
+
 struct Block : public Statement
 {
     Seq *seq;
@@ -122,11 +132,23 @@ struct Block : public Statement
 
 struct Function : public Node
 {
-    Fun function;     // dados da função
+    int type;         // tipo de retorno da função
+    string name;      // nome da função
+    Seq *params;      // sequência de parâmetros da função
     Statement *block; // instruções do corpo da função
 
     Function();
-    Function(Fun f, Statement *b);
+    Function(int t, string n, Seq *pp, Statement *b);
+};
+
+struct Param : public Node
+{
+    int type;    // tipo do parametro
+    string name; // nome do parametro
+    int valor;   // valor do parametro
+
+    Param(int t, string n);
+    Param(int t, int v);
 };
 
 struct Program : public Node
