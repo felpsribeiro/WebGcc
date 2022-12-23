@@ -37,7 +37,7 @@ Function *Parser::Func()
     // func  -> type id(params) block
 
     // captura nome do tipo de retorno
-    int rtr = ConvertToExprType(lookahead->lexeme);
+    int type = ConvertToExprType(lookahead->lexeme);
     Match(Tag::TYPE);
 
     // captura nome da função
@@ -47,16 +47,16 @@ Function *Parser::Func()
     if (!Match('('))
         throw SyntaxError(scanner->Lineno(), "\'(\' esperado");
 
-    vector<Symbol> params = Params();
+    Seq *params = Params();
 
     if (!Match(')'))
         throw SyntaxError(scanner->Lineno(), "\')\' esperado");
 
     // cria símbolo func
-    Fun f{rtr, name, params};
+    Fun f{type, name, params};
 
     // insere função na tabela de funções
-    if (!funcTable->Insert(name, f))
+    if (!funcTable->Insert(f.key, f))
     {
         // a inserção falha quando a função já está na tabela
         stringstream ss;
@@ -71,14 +71,19 @@ Function *Parser::Func()
     // ---------------------------------------
 
     // insere variáveis dos parametros na tabela de símbolos
-    for (auto v = params.begin(); v != params.end(); ++v)
-        if (!paramTable->Insert((*v).name, *v))
+    Seq *seq = params;
+    while (seq != nullptr)
+    {
+        Param *param = (Param *)(seq->elemt);
+        if (!paramTable->Insert(param->name, Symbol{param->type, param->name}))
         {
             // a inserção falha quando a variável já está na tabela
             stringstream ss;
-            ss << "parâmetro \"" << (*v).name << "\" já definido";
+            ss << "parâmetro \"" << param->name << "\" já definido";
             throw SyntaxError(scanner->Lineno(), ss.str());
         }
+        seq = seq->elemts;
+    }
 
     Statement *block = Scope();
 
@@ -88,51 +93,42 @@ Function *Parser::Func()
     delete paramTable;
     // ------------------
 
-    return new Function(f, block);
+    return new Function(type, name, params, block);
 }
 
-vector<Symbol> Parser::Params()
+Seq *Parser::Params()
 {
     // params  -> param tail
     //          | empty
     // tail    -> , param tail
     //          | empty
 
-    vector<Symbol> p;
+    Seq *p = nullptr;
 
     if (lookahead->tag != ')')
     {
         // params  -> param tail
-        p.push_back(Param());
 
-        while (lookahead->tag != ')')
-        {
-            // tail -> , param tail
-            if (!Match(','))
-                throw SyntaxError(scanner->Lineno(), "\',\' esperado");
-            p.push_back(Param());
-        }
+        int type = ConvertToExprType(lookahead->lexeme);
+        if (!Match(Tag::TYPE))
+            throw SyntaxError(scanner->Lineno(), "esperado um tipo de variável válido.");
+
+        string name{lookahead->lexeme};
+        if (!Match(Tag::ID))
+            throw SyntaxError(scanner->Lineno(), "esperado um nome de variável válido.");
+
+        Param *param = new Param(type, name);
+        Seq *seq = nullptr;
+
+        // tail -> , param tail
+        if (Match(','))
+            seq = Params();
+
+        p = new Seq(param, seq);
     }
 
     // params -> empty
     return p;
-}
-
-Symbol Parser::Param()
-{
-    // param -> type id
-
-    // captura o tipo do parâmetro
-    int type = ConvertToExprType(lookahead->lexeme);
-    if (!Match(Tag::TYPE))
-        throw SyntaxError(scanner->Lineno(), "esperado um tipo de variável válido.");
-
-    // captura o nome do parâmetro
-    string name{lookahead->lexeme};
-    if (!Match(Tag::ID))
-        throw SyntaxError(scanner->Lineno(), "esperado um nome de variável válido.");
-
-    return Symbol{name, type};
 }
 
 Statement *Parser::Scope()
@@ -378,7 +374,7 @@ Statement *Parser::Decl()
     }
 
     // cria símbolo
-    Symbol s{name, type};
+    Symbol s{type, name};
 
     // insere variável na tabela de símbolos
     if (!varTable->Insert(name, s))
@@ -732,6 +728,7 @@ Expression *Parser::Factor()
 {
     // factor -> (bool)
     //         | local
+    //         | call
     //         | integer
     //         | real
     //         | true
@@ -755,10 +752,14 @@ Expression *Parser::Factor()
         break;
     }
 
-    // factor -> local
     case Tag::ID:
     {
-        expr = Local();
+        // factor -> call
+        if (scanner->Peek() == '(')
+            expr = Call();
+        // factor -> local
+        else
+            expr = Local();
         break;
     }
 
@@ -804,6 +805,68 @@ Expression *Parser::Factor()
     }
 
     return expr;
+}
+
+Expression *Parser::Call()
+{
+    // call   -> id(args)
+
+    // args   -> bool tailAr
+    //         | NULL
+    // tailAr -> , bool tailAr
+    //         | NULL
+
+    string name{lookahead->lexeme};
+    Match(Tag::ID);
+
+    Match('(');
+    Seq *args = Args();
+    if (!Match(')'))
+    {
+        stringstream ss;
+        ss << "esperado ')' no lugar de  \'" << lookahead->lexeme << "\'";
+        throw SyntaxError{scanner->Lineno(), ss.str()};
+    }
+
+    // verifica se a função existe na tabela de varaiveis
+    string key{FuncTable::Key(name, args)};
+    Fun *f = funcTable->Find(key);
+    if (!f)
+    {
+        stringstream ss;
+        ss << "função \"" << name << "\" com esses parametros não foi declarada";
+        throw SyntaxError{scanner->Lineno(), ss.str()};
+    }
+
+    return new CallFunc(f->rtr, name, args);
+}
+
+Seq *Parser::Args()
+{
+    // args   -> bool tailAr
+    //         | empty
+    // tailAr -> , bool tailAr
+    //         | empty
+
+    Seq *args = nullptr;
+
+    // args   -> bool tailAr
+    if (lookahead->lexeme != ")")
+    {
+        Expression *bo = Bool();
+
+        // tailAr -> , bool tailAr
+        Seq *tail = nullptr;
+        if (Match(','))
+        {
+            tail = Args();
+        }
+
+        args = new Seq(bo, tail);
+    }
+
+    // args -> empty
+    return args;
 }
 
 bool Parser::Match(int tag)

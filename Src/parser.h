@@ -19,8 +19,7 @@ private:
 	Program *Prog();
 	Seq *Funcs();
 	Function *Func();
-	vector<Symbol> Params();
-	Symbol Param();
+	Seq *Params();
 	Statement *Scope();
 	Seq *Stmts();
 	Statement *Decl();
@@ -34,6 +33,8 @@ private:
 	Expression *Term();
 	Expression *Unary();
 	Expression *Factor();
+	Expression *Call();
+	Seq *Args();
 	bool Match(int tag);
 
 public:
