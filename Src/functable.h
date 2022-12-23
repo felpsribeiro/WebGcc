@@ -2,19 +2,21 @@
 #define COMPILER_FUNCTABLE
 
 #include "symtable.h"
+#include "ast.h"
 #include <string>
 #include <unordered_map>
-#include <vector>
 using std::string;
 using std::unordered_map;
-using std::vector;
 
 // modelo para funções
 struct Fun
 {
+	string key;
 	int rtr;
 	string name;
-	vector<Symbol> params;
+	Seq *params;
+
+	Fun(int r, string n, Seq *pp);
 };
 
 // tabela de funções
@@ -30,6 +32,8 @@ public:
 
 	bool Insert(string n, Fun fun);
 	Fun *Find(string n);
+
+	static string Key(string name, Seq *args); // retorna a chave da função
 };
 
 #endif
