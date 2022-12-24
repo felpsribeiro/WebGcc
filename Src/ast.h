@@ -74,7 +74,7 @@ struct Expression : public Node
 
 struct Constant : public Expression
 {
-    Constant(int etype, Token *t);
+    Constant(int type, Token *t);
 };
 
 struct Identifier : public Expression

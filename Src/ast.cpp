@@ -100,7 +100,7 @@ string Expression::Type()
 // Constant
 // --------
 
-Constant::Constant(int etype, Token *t) : Expression(NodeType::CONSTANT, etype, t) {}
+Constant::Constant(int type, Token *t) : Expression(NodeType::CONSTANT, type, t) {}
 
 // ----------
 // Identifier
