@@ -20,6 +20,7 @@ string ConvertType(int type)
     switch (type)
     {
     case ExprType::INT:
+    case ExprType::BOOL:
         return "i32";
     case ExprType::FLOAT:
         return "f32";
@@ -183,21 +184,43 @@ void Traverse(Node *n)
         case REL:
         {
             Relational *r = (Relational *)n;
-            cout << "<REL> ";
             Traverse(r->expr1);
-            cout << r->Name() << " ";
             Traverse(r->expr2);
-            cout << "</REL> ";
+
+            Tab();
+            switch (r->token->tag)
+            {
+            case Tag::EQ:
+                cout << "i32.eq" << endl;
+                break;
+            case Tag::NEQ:
+                cout << "i32.ne" << endl;
+                break;
+            case '<':
+                cout << "i32.lt" << endl;
+                break;
+            case Tag::LTE:
+                cout << "i32.le" << endl;
+                break;
+            case '>':
+                cout << "i32.gt" << endl;
+                break;
+            case Tag::GTE:
+                cout << "i32.ge" << endl;
+                break;
+            }
             break;
         }
         case LOG:
         {
             Logical *l = (Logical *)n;
-            cout << "<LOG> ";
             Traverse(l->expr1);
-            cout << l->Name() << " ";
             Traverse(l->expr2);
-            cout << "</LOG> ";
+            Tab();
+            if (l->token->tag == Tag::OR)
+                cout << "i32.or" << endl;
+            else if (l->token->tag == Tag::AND)
+                cout << "i32.and" << endl;
             break;
         }
         case ARI:
@@ -222,9 +245,8 @@ void Traverse(Node *n)
         case CONSTANT:
         {
             Constant *c = (Constant *)n;
-
             Tab();
-            cout << "i32.const " << c->Name() << endl;
+            cout << "i32.const " << c->token->lexeme << endl;
             break;
         }
         case IDENTIFIER:
@@ -255,6 +277,8 @@ void Traverse(Node *n)
         {
             Return *r = (Return *)n;
             Traverse(r->expr);
+            Tab();
+            cout << "return" << endl;
             break;
         }
         case IF_STMT:
