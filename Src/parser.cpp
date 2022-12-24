@@ -70,7 +70,7 @@ Function *Parser::Func()
     paramTable = new SymTable();
     // ---------------------------------------
 
-    // insere variáveis dos parametros na tabela de símbolos
+    // insere parametros na tabela de símbolos
     Seq *seq = params;
     while (seq != nullptr)
     {
@@ -365,7 +365,7 @@ Statement *Parser::Decl()
     string name{lookahead->lexeme};
     Match(Tag::ID);
 
-    // verifica se o nome da variável já existe como um parâmetro
+    // verifica se a variável já existe como um parâmetro
     if (paramTable->Find(name))
     {
         stringstream ss;
@@ -777,7 +777,7 @@ Expression *Parser::Factor()
     // factor -> true
     case Tag::TRUE:
     {
-        expr = new Constant(ExprType::BOOL, new Token{*lookahead});
+        expr = new Constant(ExprType::BOOL, new Token{lookahead->tag, "1"});
         Match(Tag::TRUE);
         break;
     }
@@ -785,7 +785,7 @@ Expression *Parser::Factor()
     // factor -> false
     case Tag::FALSE:
     {
-        expr = new Constant(ExprType::BOOL, new Token{*lookahead});
+        expr = new Constant(ExprType::BOOL, new Token{lookahead->tag, "0"});
         Match(Tag::FALSE);
         break;
     }
