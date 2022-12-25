@@ -230,16 +230,43 @@ void Traverse(Node *n)
             Traverse(a->expr2);
 
             Tab();
-            cout << a->Name() << endl;
+            switch (a->token->tag)
+            {
+            case '+':
+                cout << "i32.add" << endl;
+                break;
+            case '-':
+                cout << "i32.sub" << endl;
+                break;
+            case '*':
+                cout << "i32.mul" << endl;
+                break;
+            case '/':
+                cout << "i32.div_s" << endl;
+                break;
+            }
+
             break;
         }
         case UNARY:
         {
             UnaryExpr *u = (UnaryExpr *)n;
-            cout << "<UNARY> ";
-            cout << u->Name() << " ";
             Traverse(u->expr);
-            cout << "</UNARY> ";
+
+            Tab();
+            switch (u->type)
+            {
+            case ExprType::INT:
+            case ExprType::FLOAT:
+                cout << "i32.const -1" << endl;
+                Tab();
+                cout << "i32.mul" << endl;
+                break;
+            case ExprType::BOOL:
+                cout << "i32.eqz" << endl;
+                break;
+            }
+
             break;
         }
         case CONSTANT:
@@ -253,7 +280,7 @@ void Traverse(Node *n)
         {
             Identifier *i = (Identifier *)n;
             Tab();
-            cout << "local.get $" << i->Name() << endl;
+            cout << "local.get $" << i->token->lexeme << endl;
             break;
         }
         case ACCESS:

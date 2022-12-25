@@ -169,17 +169,7 @@ Arithmetic::Arithmetic(int etype, Token *t, Expression *e1, Expression *e2) : Ex
 // UnaryExpr
 // ---------
 
-UnaryExpr::UnaryExpr(int etype, Token *t, Expression *e) : Expression(NodeType::UNARY, etype, t), expr(e)
-{
-    // verificação de tipos
-    if (expr->type != ExprType::BOOL)
-    {
-        stringstream ss;
-        ss << "\'" << token->lexeme << "\' usado com operando não booleano ("
-           << expr->Name() << ":" << expr->Type() << ")";
-        throw SyntaxError{scanner->Lineno(), ss.str()};
-    }
-}
+UnaryExpr::UnaryExpr(int etype, Token *t, Expression *e) : Expression(NodeType::UNARY, etype, t), expr(e) {}
 
 // -------------
 // Call Function
