@@ -396,6 +396,68 @@ Statement *Parser::Stmt()
         }
         return stmt;
     }
+
+    // stmt -> for (stmts; bool; stmt) stmt
+    case Tag::FOR:
+    {
+        Match(Tag::FOR);
+        if (!Match('('))
+        {
+            stringstream ss;
+            ss << "esperado ( no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+
+        Statement *ctrl;
+        switch (lookahead->tag)
+        {
+        case Tag::TYPE:
+            ctrl = Decl();
+            break;
+        case Tag::ID:
+            ctrl = Stmt();
+            break;
+        default:
+            stringstream ss;
+            ss << "esperado uma variável de controle no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+            break;
+        }
+        if (!Match(';'))
+        {
+            stringstream ss;
+            ss << "esperado ( no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+
+        Expression *cond = Bool();
+        if (!Match(';'))
+        {
+            stringstream ss;
+            ss << "esperado ( no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+
+        Statement *icrmt = Stmt();
+        if (!Match(';'))
+        {
+            stringstream ss;
+            ss << "esperado ( no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+
+        if (!Match(')'))
+        {
+            stringstream ss;
+            ss << "esperado ) no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+        Statement *inst = Stmt();
+
+        stmt = new For(ctrl, cond, icrmt, inst);
+        return stmt;
+    }
+
     // stmt -> block
     case '{':
     {
