@@ -10,15 +10,17 @@ Lexer::Lexer()
 {
 	// insere palavras-reservadas na tabela
 	// token_table["main"]  = Token{ Tag::MAIN, "main" };
-	token_table["int"] 		= Token{Tag::TYPE, "int"};
-	token_table["float"] 	= Token{Tag::TYPE, "float"};
-	token_table["bool"] 	= Token{Tag::TYPE, "bool"};
-	token_table["true"] 	= Token{Tag::TRUE, "true"};
-	token_table["false"] 	= Token{Tag::FALSE, "false"};
-	token_table["if"] 		= Token{Tag::IF, "if"};
-	token_table["while"] 	= Token{Tag::WHILE, "while"};
-	token_table["do"] 		= Token{Tag::DO, "do"};
-	token_table["return"] 	= Token{Tag::RETURN, "return"};
+	token_table["int"] = Token{Tag::TYPE, "int"};
+	token_table["float"] = Token{Tag::TYPE, "float"};
+	token_table["bool"] = Token{Tag::TYPE, "bool"};
+	token_table["true"] = Token{Tag::TRUE, "true"};
+	token_table["false"] = Token{Tag::FALSE, "false"};
+	token_table["if"] = Token{Tag::IF, "if"};
+	token_table["else"] = Token{Tag::IF, "else"};
+	token_table["while"] = Token{Tag::WHILE, "while"};
+	token_table["do"] = Token{Tag::DO, "do"};
+	token_table["for"] = Token{Tag::DO, "for"};
+	token_table["return"] = Token{Tag::RETURN, "return"};
 
 	// inicia leitura da entrada
 	peek = fin.get();
@@ -162,6 +164,82 @@ Token *Lexer::Scan()
 	// retorna operadores com mais de um caractere: >=, <=, == e !=
 	switch (peek)
 	{
+	case '+':
+	{
+		char next = fin.get();
+		if (next == '=')
+		{
+			peek = fin.get();
+			token = Token{Tag::ATTADD, "+"};
+			return &token;
+		}
+		else if (next == '+')
+		{
+			peek = fin.get();
+			token = Token{Tag::PLUSPLUS, "+="};
+			return &token;
+		}
+		else
+		{
+			fin.unget();
+		}
+		break;
+	}
+
+	case '-':
+	{
+		char next = fin.get();
+		if (next == '=')
+		{
+			peek = fin.get();
+			token = Token{Tag::ATTSUB, "-="};
+			return &token;
+		}
+		else if (next == '-')
+		{
+			peek = fin.get();
+			token = Token{Tag::LESSLESS, "--"};
+			return &token;
+		}
+		else
+		{
+			fin.unget();
+		}
+		break;
+	}
+
+	case '*':
+	{
+		char next = fin.get();
+		if (next == '=')
+		{
+			peek = fin.get();
+			token = Token{Tag::ATTMUL, "*="};
+			return &token;
+		}
+		else
+		{
+			fin.unget();
+		}
+		break;
+	}
+
+	case '/':
+	{
+		char next = fin.get();
+		if (next == '=')
+		{
+			peek = fin.get();
+			token = Token{Tag::ATTDIV, "/="};
+			return &token;
+		}
+		else
+		{
+			fin.unget();
+		}
+		break;
+	}
+
 	case '&':
 	{
 		char next = fin.get();
@@ -171,12 +249,18 @@ Token *Lexer::Scan()
 			token = Token{Tag::AND, "&&"};
 			return &token;
 		}
+		else if (next == '=')
+		{
+			peek = fin.get();
+			token = Token{Tag::ATTAND, "&="};
+			return &token;
+		}
 		else
 		{
 			fin.unget();
 		}
+		break;
 	}
-	break;
 
 	case '|':
 	{
@@ -187,12 +271,18 @@ Token *Lexer::Scan()
 			token = Token{Tag::OR, "||"};
 			return &token;
 		}
+		else if (next == '=')
+		{
+			peek = fin.get();
+			token = Token{Tag::ATTOR, "|="};
+			return &token;
+		}
 		else
 		{
 			fin.unget();
 		}
+		break;
 	}
-	break;
 
 	case '>':
 	{
@@ -261,6 +351,6 @@ Token *Lexer::Scan()
 
 	// retorna caracteres não alphanuméricos isolados: (, ), +, -, etc.
 	token = Token{peek};
-	peek = ' ';
+	peek = fin.get();
 	return &token;
 }
