@@ -24,12 +24,27 @@ index       ::= [ integer ]
 assign      ::= = bool
 	          | NULL
 
-stmt        ::= local = bool;
+stmt        ::= plusplus local plusplus;
+              | local assig bool;
               | return bool;
               | if (bool) stmt
               | while (bool) stmt
               | do stmt while (bool);
+              | for (stmts; bool; stmt) stmt
               | block
+
+plusplus    ::= ++
+              | --
+              | NULL
+
+assig       ::= oper =
+oper        ::= +
+              | -
+              | *
+              | /
+              | &
+              | |
+              | NULL
 
 local       ::= id position
 position    ::= [bool]
