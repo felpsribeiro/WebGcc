@@ -216,11 +216,23 @@ void Traverse(Node *n)
             Logical *l = (Logical *)n;
             Traverse(l->expr1);
             Traverse(l->expr2);
+            
             Tab();
-            if (l->token->tag == Tag::OR)
+            switch (l->token->tag)
+            {
+            case Tag::OR:
+            case Tag::ATTOR:
                 cout << "i32.or" << endl;
-            else if (l->token->tag == Tag::AND)
+                break;
+            case Tag::AND:
+            case Tag::ATTAND:
                 cout << "i32.and" << endl;
+                break;
+            default:
+                cout << "erro na compilação" << endl;
+                break;
+            }
+
             break;
         }
         case ARI:
@@ -233,16 +245,25 @@ void Traverse(Node *n)
             switch (a->token->tag)
             {
             case '+':
+            case Tag::PLUSPLUS:
+            case Tag::ATTADD:
                 cout << "i32.add" << endl;
                 break;
             case '-':
+            case Tag::LESSLESS:
+            case Tag::ATTSUB:
                 cout << "i32.sub" << endl;
                 break;
             case '*':
+            case Tag::ATTMUL:
                 cout << "i32.mul" << endl;
                 break;
             case '/':
+            case Tag::ATTDIV:
                 cout << "i32.div_s" << endl;
+                break;
+            default:
+                cout << "erro na compilação" << endl;
                 break;
             }
 
