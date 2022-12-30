@@ -182,6 +182,8 @@ Seq *Parser::Stmts()
         break;
     }
     // stmts -> stmt stmts
+    case Tag::PLUSPLUS:
+    case Tag::LESSLESS:
     case Tag::ID:
     case Tag::RETURN:
     case Tag::IF:
@@ -202,29 +204,92 @@ Seq *Parser::Stmts()
 
 Statement *Parser::Stmt()
 {
-    // stmt  -> local = bool;
+    // stmt  -> plusplus local plusplus;
+    //        | local assig bool;
     //        | return bool;
     //        | if (bool) stmt
     //        | while (bool) stmt
     //        | do stmt while (bool);
+    //        | for (stmts; bool; stmt) stmt
     //        | block
 
     Statement *stmt = nullptr;
 
     switch (lookahead->tag)
     {
+    // stmt  -> plusplus local;
+    case Tag::PLUSPLUS:
+    case Tag::LESSLESS:
+    {
+        Token t = *lookahead;
+        Match(lookahead->tag);
+        Expression *left = Local();
+        Expression *constant = new Constant(ExprType::INT, new Token{'1'});
+        Expression *right = new Arithmetic(left->type, new Token(t), left, constant);
 
-    // stmt -> local = bool;
+        stmt = new Assign(left, right);
+        if (!Match(';'))
+        {
+            stringstream ss;
+            ss << "esperado ; no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+        return stmt;
+    }
+
+    // stmt -> local plusplus;
+    //       | local assig bool;
     case Tag::ID:
     {
         Expression *left = Local();
-        if (!Match('='))
+        Expression *right;
+
+        switch (lookahead->tag)
+        {
+        // stmt -> local plusplus;
+        case Tag::PLUSPLUS:
+        case Tag::LESSLESS:
+        {
+            Expression *constant = new Constant(ExprType::INT, new Token{'1'});
+            right = new Arithmetic(left->type, new Token(*lookahead), left, constant);
+            Match(lookahead->tag);
+            break;
+        }
+
+        // stmt -> local assig bool;
+        case Tag::ATTADD:
+        case Tag::ATTSUB:
+        case Tag::ATTMUL:
+        case Tag::ATTDIV:
+        {
+            Token t = *lookahead;
+            Match(lookahead->tag);
+            Expression *expr = Bool();
+            right = new Arithmetic(left->type, new Token(t), left, expr);
+            break;
+        }
+        case Tag::ATTAND:
+        case Tag::ATTOR:
+        {
+            Token t = *lookahead;
+            Match(lookahead->tag);
+            Expression *expr = Bool();
+            right = new Logical(new Token(t), left, expr);
+            break;
+        }
+        case '=':
+        {
+            right = Bool();
+            break;
+        }
+        default:
         {
             stringstream ss;
-            ss << "esperado = no lugar de  \'" << lookahead->lexeme << "\'";
+            ss << "não esperado \'" << lookahead->lexeme << "\' após a chamada de " << left->token->lexeme;
             throw SyntaxError{scanner->Lineno(), ss.str()};
         }
-        Expression *right = Bool();
+        }
+
         stmt = new Assign(left, right);
         if (!Match(';'))
         {
@@ -269,7 +334,10 @@ Statement *Parser::Stmt()
             throw SyntaxError{scanner->Lineno(), ss.str()};
         }
         Statement *inst = Stmt();
-        stmt = new If(cond, inst);
+        Statement *instElse = nullptr;
+        if (Match(Tag::ELSE))
+            instElse = Stmt();
+        stmt = new If(cond, inst, instElse);
         return stmt;
     }
 
