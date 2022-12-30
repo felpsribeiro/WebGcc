@@ -229,3 +229,9 @@ While::While(Expression *e, Statement *s) : Statement(NodeType::WHILE_STMT), exp
 // --------
 
 DoWhile::DoWhile(Statement *s, Expression *e) : Statement(NodeType::DOWHILE_STMT), stmt(s), expr(e) {}
+
+// --------
+// For
+// --------
+
+For::For(Statement *ct, Expression *co, Statement *ic, Statement *s) : Statement(NodeType::FOR_STMT), ctrl(ct), cond(co), icrmt(ic), stmt(s) {}

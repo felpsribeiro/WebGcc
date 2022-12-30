@@ -27,7 +27,8 @@ enum NodeType
     RETURN_STMT,
     IF_STMT,
     WHILE_STMT,
-    DOWHILE_STMT
+    DOWHILE_STMT,
+    FOR_STMT
 };
 
 enum ExprType
@@ -174,7 +175,8 @@ struct If : public Statement
 {
     Expression *expr;
     Statement *stmt;
-    If(Expression *e, Statement *s);
+    Statement *stmtElse;
+    If(Expression *e, Statement *s, Statement *ss);
 };
 
 struct While : public Statement
@@ -189,6 +191,16 @@ struct DoWhile : public Statement
     Statement *stmt;
     Expression *expr;
     DoWhile(Statement *s, Expression *e);
+};
+
+
+struct For : public Statement
+{
+    Statement *ctrl;
+    Expression *cond;
+    Statement *icrmt;
+    Statement *stmt;
+    For(Statement *ct, Expression *co, Statement * ic, Statement *s);
 };
 
 #endif
