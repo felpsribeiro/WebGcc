@@ -16,7 +16,7 @@ Lexer::Lexer()
 	token_table["true"] = Token{Tag::TRUE, "true"};
 	token_table["false"] = Token{Tag::FALSE, "false"};
 	token_table["if"] = Token{Tag::IF, "if"};
-	token_table["else"] = Token{Tag::IF, "else"};
+	token_table["else"] = Token{Tag::ELSE, "else"};
 	token_table["while"] = Token{Tag::WHILE, "while"};
 	token_table["do"] = Token{Tag::DO, "do"};
 	token_table["for"] = Token{Tag::DO, "for"};
