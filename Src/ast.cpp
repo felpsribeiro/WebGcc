@@ -216,7 +216,7 @@ Return::Return(Expression *e) : Statement(NodeType::RETURN_STMT), expr(e) {}
 // If
 // ----
 
-If::If(Expression *e, Statement *s) : Statement(NodeType::IF_STMT), expr(e), stmt(s) {}
+If::If(Expression *e, Statement *s, Statement *ss) : Statement(NodeType::IF_STMT), expr(e), stmt(s), stmtElse(ss) {}
 
 // -----
 // While
