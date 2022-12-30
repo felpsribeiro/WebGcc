@@ -332,11 +332,36 @@ void Traverse(Node *n)
         case IF_STMT:
         {
             If *i = (If *)n;
-            cout << "<IF> ";
+
             Traverse(i->expr);
-            cout << "\n";
+            Tab();
+            cout << "(if" << endl;
+            depth++;
+            Tab();
+            cout << "(then" << endl;
+            depth++;
             Traverse(i->stmt);
-            cout << "</IF> ";
+            depth--;
+            Tab();
+            cout << ")" << endl;
+            depth--;
+
+            if (i->stmtElse)
+            {
+            depth++;
+            Tab();
+            cout << "(else" << endl;
+            depth++;
+            Traverse(i->stmtElse);
+            depth--;
+            Tab();
+            cout << ")" << endl;
+            depth--;
+            }
+
+            Tab();
+            cout << ")" << endl;
+
             break;
         }
         case WHILE_STMT:
