@@ -183,15 +183,24 @@ CallFunc::CallFunc(int type, string n, Seq *aa) : Expression(NodeType::CALL, typ
 
 Block::Block(Seq *s, SymMap t) : Statement(NodeType::BLOCK), seq(s), table(t) {}
 
+// -----
+// Struc
+// -----
+
+Struc::Struc(Statement *s, SymMap t) : Statement(NodeType::STRUC), stmt(s), table(t) {}
+
 // ----
 // Seq
 // ----
 
+Seq::Seq(Node *e) : Node(NodeType::SEQ), elemt(e) {}
 Seq::Seq(Node *e, Seq *ee) : Node(NodeType::SEQ), elemt(e), elemts(ee) {}
 
 // ------
 // Assign
 // ------
+
+Assign::Assign(Expression *i) : Statement(NodeType::ASSIGN), id(i) {}
 
 Assign::Assign(Expression *i, Expression *e) : Statement(NodeType::ASSIGN), id(i), expr(e)
 {

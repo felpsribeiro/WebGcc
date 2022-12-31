@@ -22,6 +22,7 @@ enum NodeType
     ARI,
     UNARY,
     BLOCK,
+    STRUC,
     SEQ,
     ASSIGN,
     RETURN_STMT,
@@ -53,6 +54,7 @@ struct Seq : public Node
 {
     Node *elemt;
     Seq *elemts;
+    Seq(Node *e);
     Seq(Node *e, Seq *ee);
 };
 
@@ -131,6 +133,13 @@ struct Block : public Statement
     Block(Seq *s, SymMap t);
 };
 
+struct Struc : public Statement
+{
+    Statement *stmt;
+    SymMap table;
+    Struc(Statement *s, SymMap t);
+};
+
 struct Function : public Node
 {
     int type;         // tipo de retorno da função
@@ -162,6 +171,7 @@ struct Assign : public Statement
 {
     Expression *id;
     Expression *expr;
+    Assign(Expression *i);
     Assign(Expression *i, Expression *e);
 };
 
@@ -192,7 +202,6 @@ struct DoWhile : public Statement
     Expression *expr;
     DoWhile(Statement *s, Expression *e);
 };
-
 
 struct For : public Statement
 {
