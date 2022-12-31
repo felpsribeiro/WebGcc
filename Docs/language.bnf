@@ -4,15 +4,13 @@ prog        ::= funcs
 
 funcs       ::= func funcs
               | NULL
-func        ::= type id(params) block
+func        ::= type id(params) { stmts }
 
 params      ::= param tail
               | NULL
 tail        ::= , param tail
               | NULL
 param       ::= type id
-
-block       ::= { stmts }
 
 stmts       ::= decl stmts
 	          | stmt stmts
@@ -24,14 +22,18 @@ index       ::= [ integer ]
 assign      ::= = bool
 	          | NULL
 
-stmt        ::= plusplus local plusplus;
-              | local assig bool;
+stmt        ::= basic;
               | return bool;
+              | block
+
+block       ::= { stmts }
               | if (bool) stmt
               | while (bool) stmt
               | do stmt while (bool);
-              | for (stmts; bool; stmt) stmt
-              | block
+              | for (stmts bool; basic) stmt
+
+basic       ::= plusplus local plusplus
+              | local assig bool
 
 plusplus    ::= ++
               | --
