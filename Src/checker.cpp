@@ -169,6 +169,24 @@ void Traverse(Node *n)
             cout << count->Tab() << ")" << endl;
             break;
         }
+        case STRUC:
+        {
+            cout << count->Tab() << "(" << endl;
+
+            Struc *b = (Struc *)n;
+            for (auto &local : b->table)
+            {
+                cout << count->Tab() << "(local $" << local.second.name;
+                cout << " " << ConvertType(local.second.type) << ")" << endl;
+            }
+
+            count->depth++;
+            Traverse(b->stmt);
+            count->depth--;
+
+            cout << count->Tab() << ")" << endl;
+            break;
+        }
         case SEQ:
         {
             Seq *s = (Seq *)n;
