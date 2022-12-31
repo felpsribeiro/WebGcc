@@ -1,18 +1,29 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <string>
 #include "lexer.h"
-#include "ast.h"
+#include "checker.h"
 using namespace std;
 
 extern ifstream fin;
-int depth = 0;
+InstructionCounter *count = nullptr;
 
-void Tab()
+InstructionCounter::InstructionCounter() : block(0), loop(0), depth(0) {}
+
+string InstructionCounter::Tab()
 {
+    stringstream ss;
     for (int i = 0; i < depth; i++)
-        cout << "   ";
+        ss << "   ";
+    return ss.str();
+}
+
+string InstructionCounter::Tab(unsigned int d)
+{
+    stringstream ss;
+    for (int i = 0; i < d; i++)
+        ss << "   ";
+    return ss.str();
 }
 
 string ConvertType(int type)
@@ -107,7 +118,9 @@ void Traverse(Node *n)
         {
             cout << "(module" << endl;
             Program *m = (Program *)n;
+            count->depth++;
             Traverse(m->funcs);
+            count->depth--;
             cout << ")" << endl;
             break;
         }
@@ -115,11 +128,8 @@ void Traverse(Node *n)
         {
             Function *f = (Function *)n;
 
-            depth++;
-            Tab();
-
             // declara função e seu nome
-            cout << "(func $" << f->name;
+            cout << count->Tab() << "(func $" << f->name;
 
             // parâmetros da função
             Traverse(f->params);
@@ -128,13 +138,11 @@ void Traverse(Node *n)
                 cout << " (result " << ConvertType(f->type) << ")";
             cout << endl;
 
-            depth++;
+            count->depth++;
             Traverse(f->block);
-            depth--;
+            count->depth--;
 
-            Tab();
-            cout << ")" << endl;
-            depth--;
+            cout << count->Tab() << ")" << endl;
             break;
         }
         case PARAM:
@@ -145,23 +153,20 @@ void Traverse(Node *n)
         }
         case BLOCK:
         {
-            Tab();
-            cout << "(" << endl;
-            depth++;
+            cout << count->Tab() << "(" << endl;
 
             Block *b = (Block *)n;
             for (auto &local : b->table)
             {
-                Tab();
-                cout << "(local $" << local.second.name;
+                cout << count->Tab() << "(local $" << local.second.name;
                 cout << " " << ConvertType(local.second.type) << ")" << endl;
             }
 
+            count->depth++;
             Traverse(b->seq);
+            count->depth--;
 
-            depth--;
-            Tab();
-            cout << ")" << endl;
+            cout << count->Tab() << ")" << endl;
             break;
         }
         case SEQ:
@@ -177,8 +182,7 @@ void Traverse(Node *n)
             // não utilizo enquanto nao estou lidando com arrays
             // Traverse(a->id);
             Traverse(a->expr);
-            Tab();
-            cout << "local.set $" << a->id->Name() << endl;
+            cout << count->Tab() << "local.set $" << a->id->Name() << endl;
             break;
         }
         case REL:
@@ -187,7 +191,7 @@ void Traverse(Node *n)
             Traverse(r->expr1);
             Traverse(r->expr2);
 
-            Tab();
+            cout << count->Tab();
             switch (r->token->tag)
             {
             case Tag::EQ:
@@ -216,8 +220,8 @@ void Traverse(Node *n)
             Logical *l = (Logical *)n;
             Traverse(l->expr1);
             Traverse(l->expr2);
-            
-            Tab();
+
+            cout << count->Tab();
             switch (l->token->tag)
             {
             case Tag::OR:
@@ -241,7 +245,7 @@ void Traverse(Node *n)
             Traverse(a->expr1);
             Traverse(a->expr2);
 
-            Tab();
+            cout << count->Tab();
             switch (a->token->tag)
             {
             case '+':
@@ -274,13 +278,12 @@ void Traverse(Node *n)
             UnaryExpr *u = (UnaryExpr *)n;
             Traverse(u->expr);
 
-            Tab();
+            cout << count->Tab();
             switch (u->type)
             {
             case ExprType::INT:
             case ExprType::FLOAT:
                 cout << "i32.const -1" << endl;
-                Tab();
                 cout << "i32.mul" << endl;
                 break;
             case ExprType::BOOL:
@@ -293,15 +296,13 @@ void Traverse(Node *n)
         case CONSTANT:
         {
             Constant *c = (Constant *)n;
-            Tab();
-            cout << "i32.const " << c->token->lexeme << endl;
+            cout << count->Tab() << "i32.const " << c->token->lexeme << endl;
             break;
         }
         case IDENTIFIER:
         {
             Identifier *i = (Identifier *)n;
-            Tab();
-            cout << "local.get $" << i->token->lexeme << endl;
+            cout << count->Tab() << "local.get $" << i->token->lexeme << endl;
             break;
         }
         case ACCESS:
@@ -317,16 +318,14 @@ void Traverse(Node *n)
         {
             CallFunc *a = (CallFunc *)n;
             Traverse(a->args);
-            Tab();
-            cout << "call $" << a->token->lexeme << endl;
+            cout << count->Tab() << "call $" << a->token->lexeme << endl;
             break;
         }
         case RETURN_STMT:
         {
             Return *r = (Return *)n;
             Traverse(r->expr);
-            Tab();
-            cout << "return" << endl;
+            cout << count->Tab() << "return" << endl;
             break;
         }
         case IF_STMT:
@@ -334,53 +333,85 @@ void Traverse(Node *n)
             If *i = (If *)n;
 
             Traverse(i->expr);
-            Tab();
-            cout << "(if" << endl;
-            depth++;
-            Tab();
-            cout << "(then" << endl;
-            depth++;
+            cout << count->Tab(count->depth++) << "(if" << endl;
+            cout << count->Tab(count->depth++) << "(then" << endl;
             Traverse(i->stmt);
-            depth--;
-            Tab();
-            cout << ")" << endl;
-            depth--;
+            cout << count->Tab(count->depth--) << ")" << endl;
 
             if (i->stmtElse)
             {
-            depth++;
-            Tab();
-            cout << "(else" << endl;
-            depth++;
-            Traverse(i->stmtElse);
-            depth--;
-            Tab();
-            cout << ")" << endl;
-            depth--;
+                cout << count->Tab(count->depth++) << "(else" << endl;
+                Traverse(i->stmtElse);
+                cout << count->Tab(count->depth--) << ")" << endl;
             }
 
-            Tab();
-            cout << ")" << endl;
+            cout << count->Tab(count->depth--) << ")" << endl;
 
             break;
         }
         case WHILE_STMT:
         {
             While *w = (While *)n;
-            cout << "<WHILE> ";
+
+            cout << count->Tab(count->depth++) << "(block $block_" << count->block << endl;
+            cout << count->Tab(count->depth++) << "(loop $loop_" << count->loop << endl;
+
             Traverse(w->expr);
-            cout << "\n";
+            // inverte o resultado da condição
+            cout << count->Tab() << "i32.eqz" << endl;
+            cout << count->Tab() << "br_if $block_" << count->block << endl << endl;
+
             Traverse(w->stmt);
-            cout << "</WHILE> ";
+            cout << count->Tab() << "br $loop_" << count->loop << endl;
+            count->depth--;
+            cout << count->Tab() << ")" << endl;
+            count->depth--;
+            cout << count->Tab() << ")" << endl;
+
             break;
         }
         case DOWHILE_STMT:
         {
             DoWhile *dw = (DoWhile *)n;
-            cout << "<DOWHILE> ";
+            count->block++;
+            count->loop++;
+            
+            cout << count->Tab(count->depth++) << "(loop $loop_" << count->loop << endl;
             Traverse(dw->stmt);
+            cout << endl;
             Traverse(dw->expr);
-            cout << "</DOWHILE> ";
+            cout << count->Tab() << "br_if $loop_" << count->loop << endl;
+            count->depth--;
+            cout << count->Tab() << ")" << endl;
+
+            break;
+        }
+        case FOR_STMT:
+        {
+            For *f = (For *)n;
+            count->block++;
+            count->loop++;
+
+            Traverse(f->ctrl);
+
+            cout << count->Tab(count->depth++) << "(block $block_" << count->block << endl;
+            cout << count->Tab(count->depth++) << "(loop $loop_" << count->loop << endl;
+
+            Traverse(f->cond);
+            // inverte o resultado da condição
+            cout << count->Tab() << "i32.eqz" << endl;
+            cout << count->Tab() << "br_if $block_" << count->block << endl << endl;
+
+            Traverse(f->stmt);
+            cout << endl;
+            
+            Traverse(f->icrmt);
+            cout << count->Tab() << "br $loop_" << count->loop << endl;
+            count->depth--;
+            cout << count->Tab() << ")" << endl;
+            count->depth--;
+            cout << count->Tab() << ")" << endl;
+
             break;
         }
         }
@@ -389,6 +420,7 @@ void Traverse(Node *n)
 
 void TestParser(Node *n)
 {
+    count = new InstructionCounter();
     Traverse(n);
     cout << endl;
 }
