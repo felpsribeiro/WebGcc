@@ -34,7 +34,7 @@ Seq *Parser::Funcs()
 
 Function *Parser::Func()
 {
-    // func  -> type id(params) block
+    // func  -> type id(params) { scope }
 
     // captura nome do tipo de retorno
     int type = ConvertToExprType(lookahead->lexeme);
@@ -88,7 +88,7 @@ Function *Parser::Func()
     Statement *block = Scope();
 
     // ------------------
-    // remove tabela
+    // remove tabela de parâmetros
     // ------------------
     delete paramTable;
     // ------------------
@@ -205,25 +205,21 @@ Seq *Parser::Stmts()
 
 Statement *Parser::Stmt()
 {
-    // stmt  -> basic;
-    //        | local assig bool;
+    // stmt  -> assign;
     //        | return bool;
-    //        | if (bool) stmt
-    //        | while (bool) stmt
-    //        | do stmt while (bool);
-    //        | for (stmts; bool; stmt) stmt
     //        | block
+    //        | struc
 
     Statement *stmt = nullptr;
 
     switch (lookahead->tag)
     {
-    // stmt  -> basic;
+    // stmt -> assign;
     case Tag::PLUSPLUS:
     case Tag::LESSLESS:
     case Tag::ID:
     {
-        stmt = Basic();
+        stmt = Attribution();
         if (!Match(';'))
         {
             stringstream ss;
@@ -249,157 +245,16 @@ Statement *Parser::Stmt()
         return stmt;
     }
 
-    // stmt -> if (bool) stmt
-    case Tag::IF:
-    {
-        Match(Tag::IF);
-        if (!Match('('))
-        {
-            stringstream ss;
-            ss << "esperado ( no lugar de  \'" << lookahead->lexeme << "\'";
-            throw SyntaxError{scanner->Lineno(), ss.str()};
-        }
-        Expression *cond = Bool();
-        if (!Match(')'))
-        {
-            stringstream ss;
-            ss << "esperado ) no lugar de  \'" << lookahead->lexeme << "\'";
-            throw SyntaxError{scanner->Lineno(), ss.str()};
-        }
-        Statement *inst = Stmt();
-        Statement *instElse = nullptr;
-        if (Match(Tag::ELSE))
-            instElse = Stmt();
-        stmt = new If(cond, inst, instElse);
-        return stmt;
-    }
-
-    // stmt -> while (bool) stmt
-    case Tag::WHILE:
-    {
-        Match(Tag::WHILE);
-        if (!Match('('))
-        {
-            stringstream ss;
-            ss << "esperado ( no lugar de  \'" << lookahead->lexeme << "\'";
-            throw SyntaxError{scanner->Lineno(), ss.str()};
-        }
-        Expression *cond = Bool();
-        if (!Match(')'))
-        {
-            stringstream ss;
-            ss << "esperado ) no lugar de  \'" << lookahead->lexeme << "\'";
-            throw SyntaxError{scanner->Lineno(), ss.str()};
-        }
-        Statement *inst = Stmt();
-        stmt = new While(cond, inst);
-        return stmt;
-    }
-
-    // stmt -> do stmt while (bool);
-    case Tag::DO:
-    {
-        Match(Tag::DO);
-        Statement *inst = Stmt();
-        if (!Match(Tag::WHILE))
-        {
-            stringstream ss;
-            ss << "esperado \'while\' no lugar de  \'" << lookahead->lexeme << "\'";
-            throw SyntaxError{scanner->Lineno(), ss.str()};
-        }
-        if (!Match('('))
-        {
-            stringstream ss;
-            ss << "esperado ( no lugar de  \'" << lookahead->lexeme << "\'";
-            throw SyntaxError{scanner->Lineno(), ss.str()};
-        }
-        Expression *cond = Bool();
-        stmt = new DoWhile(inst, cond);
-        if (!Match(')'))
-        {
-            stringstream ss;
-            ss << "esperado ) no lugar de  \'" << lookahead->lexeme << "\'";
-            throw SyntaxError{scanner->Lineno(), ss.str()};
-        }
-        if (!Match(';'))
-        {
-            stringstream ss;
-            ss << "esperado ; no lugar de  \'" << lookahead->lexeme << "\'";
-            throw SyntaxError{scanner->Lineno(), ss.str()};
-        }
-        return stmt;
-    }
-
-    // stmt -> for (stmts; bool; stmt) stmt
-    case Tag::FOR:
-    {
-        // ------------------------------------
-        // nova tabela de símbolos para o bloco
-        // ------------------------------------
-        SymTable *saved = varTable;
-        varTable = new SymTable(varTable);
-        // ------------------------------------
-
-        Match(Tag::FOR);
-        if (!Match('('))
-        {
-            stringstream ss;
-            ss << "esperado ( no lugar de  \'" << lookahead->lexeme << "\'";
-            throw SyntaxError{scanner->Lineno(), ss.str()};
-        }
-
-        Statement *ctrl;
-        switch (lookahead->tag)
-        {
-        case Tag::TYPE:
-            ctrl = Decl();
-            break;
-        case Tag::ID:
-            ctrl = Stmt();
-            break;
-        default:
-            stringstream ss;
-            ss << "esperado uma variável de controle no lugar de  \'" << lookahead->lexeme << "\'";
-            throw SyntaxError{scanner->Lineno(), ss.str()};
-            break;
-        }
-
-        Expression *cond = Bool();
-        if (!Match(';'))
-        {
-            stringstream ss;
-            ss << "esperado ( no lugar de  \'" << lookahead->lexeme << "\'";
-            throw SyntaxError{scanner->Lineno(), ss.str()};
-        }
-
-        Statement *icrmt = Basic();
-
-        if (!Match(')'))
-        {
-            stringstream ss;
-            ss << "esperado ) no lugar de  \'" << lookahead->lexeme << "\'";
-            throw SyntaxError{scanner->Lineno(), ss.str()};
-        }
-        Statement *inst = Stmt();
-
-        stmt = new For(ctrl, cond, icrmt, inst);
-
-        // ------------------------------------------------------
-        // tabela do escopo envolvente volta a ser a tabela ativa
-        // ------------------------------------------------------
-        delete varTable;
-        varTable = saved;
-        // ------------------------------------------------------
-
-        return stmt;
-    }
-
     // stmt -> block
     case '{':
-    {
-        stmt = Scope();
-        return stmt;
-    }
+        return Scope();
+
+    // stmt -> struc
+    case Tag::IF:
+    case Tag::WHILE:
+    case Tag::DO:
+    case Tag::FOR:
+        return Structure();
 
     default:
     {
@@ -410,7 +265,7 @@ Statement *Parser::Stmt()
     }
 }
 
-Statement *Parser::Basic()
+Statement *Parser::Attribution()
 {
     // basic -> plusplus local plusplus
     //        | local assig bool
@@ -494,7 +349,7 @@ Statement *Parser::Basic()
             throw SyntaxError{scanner->Lineno(), ss.str()};
         }
         }
-        
+
         if (right)
             stmt = new Assign(left, right);
         else
@@ -509,6 +364,181 @@ Statement *Parser::Basic()
         throw SyntaxError{scanner->Lineno(), ss.str()};
     }
     }
+}
+
+Statement *Parser::Structure()
+{
+    // struc -> if (bool) stmt
+    //        | while (bool) stmt
+    //        | do stmt while (bool);
+    //        | for (stmts; bool; stmt) stmt
+
+    // ------------------------------------
+    // nova tabela de símbolos para o bloco
+    // ------------------------------------
+    SymTable *saved = varTable;
+    varTable = new SymTable(varTable);
+    // ------------------------------------
+
+    Statement *struc = nullptr;
+
+    switch (lookahead->tag)
+    {
+    // struc -> if (bool) stmt
+    case Tag::IF:
+    {
+        Match(Tag::IF);
+        if (!Match('('))
+        {
+            stringstream ss;
+            ss << "esperado ( no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+        Expression *cond = Bool();
+        if (!Match(')'))
+        {
+            stringstream ss;
+            ss << "esperado ) no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+        Statement *inst = Stmt();
+        Statement *instElse = nullptr;
+        if (Match(Tag::ELSE))
+            instElse = Stmt();
+
+        Statement *sts = new If(cond, inst, instElse);
+        struc = new Struc(sts, varTable->Table());
+
+        break;
+    }
+
+    // struc -> while (bool) stmt
+    case Tag::WHILE:
+    {
+        Match(Tag::WHILE);
+        if (!Match('('))
+        {
+            stringstream ss;
+            ss << "esperado ( no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+        Expression *cond = Bool();
+        if (!Match(')'))
+        {
+            stringstream ss;
+            ss << "esperado ) no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+
+        Statement *sts = new While(cond, Stmt());
+        struc = new Struc(sts, varTable->Table());
+
+        break;
+    }
+
+    // struc -> do stmt while (bool);
+    case Tag::DO:
+    {
+        Match(Tag::DO);
+        Statement *inst = Stmt();
+        if (!Match(Tag::WHILE))
+        {
+            stringstream ss;
+            ss << "esperado \'while\' no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+        if (!Match('('))
+        {
+            stringstream ss;
+            ss << "esperado ( no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+
+        Statement *sts = new DoWhile(inst, Bool());
+        struc = new Struc(sts, varTable->Table());
+
+        if (!Match(')'))
+        {
+            stringstream ss;
+            ss << "esperado ) no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+        if (!Match(';'))
+        {
+            stringstream ss;
+            ss << "esperado ; no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+
+        break;
+    }
+
+    // struc -> for (stmts; bool; stmt) stmt
+    case Tag::FOR:
+    {
+        // ------------------------------------
+        // nova tabela de símbolos para o bloco
+        // ------------------------------------
+        SymTable *saved = varTable;
+        varTable = new SymTable(varTable);
+        // ------------------------------------
+
+        Match(Tag::FOR);
+        if (!Match('('))
+        {
+            stringstream ss;
+            ss << "esperado ( no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+
+        Statement *ctrl;
+        switch (lookahead->tag)
+        {
+        case Tag::TYPE:
+            ctrl = Decl();
+            break;
+        case Tag::ID:
+            ctrl = Stmt();
+            break;
+        default:
+            stringstream ss;
+            ss << "esperado uma variável de controle no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+            break;
+        }
+
+        Expression *cond = Bool();
+        if (!Match(';'))
+        {
+            stringstream ss;
+            ss << "esperado ( no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+
+        Statement *icrmt = Attribution();
+
+        if (!Match(')'))
+        {
+            stringstream ss;
+            ss << "esperado ) no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+
+        Statement *sts = new For(ctrl, cond, icrmt, Stmt());
+        struc = new Struc(sts, varTable->Table());
+
+        break;
+    }
+    }
+
+    // ------------------------------------------------------
+    // tabela do escopo envolvente volta a ser a tabela ativa
+    // ------------------------------------------------------
+    delete varTable;
+    varTable = saved;
+    // ------------------------------------------------------
+
+    return struc;
 }
 
 // ---------- Declaration ----------
