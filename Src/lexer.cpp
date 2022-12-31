@@ -19,7 +19,7 @@ Lexer::Lexer()
 	token_table["else"] = Token{Tag::ELSE, "else"};
 	token_table["while"] = Token{Tag::WHILE, "while"};
 	token_table["do"] = Token{Tag::DO, "do"};
-	token_table["for"] = Token{Tag::DO, "for"};
+	token_table["for"] = Token{Tag::FOR, "for"};
 	token_table["return"] = Token{Tag::RETURN, "return"};
 
 	// inicia leitura da entrada
@@ -176,7 +176,7 @@ Token *Lexer::Scan()
 		else if (next == '+')
 		{
 			peek = fin.get();
-			token = Token{Tag::PLUSPLUS, "+="};
+			token = Token{Tag::PLUSPLUS, "++"};
 			return &token;
 		}
 		else
