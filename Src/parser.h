@@ -24,6 +24,7 @@ private:
 	Seq *Stmts();
 	Statement *Decl();
 	Statement *Stmt();
+	Statement *Basic();
 	Expression *Local();
 	Expression *Bool();
 	Expression *Join();

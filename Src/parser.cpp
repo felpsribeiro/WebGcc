@@ -189,6 +189,7 @@ Seq *Parser::Stmts()
     case Tag::IF:
     case Tag::WHILE:
     case Tag::DO:
+    case Tag::FOR:
     case '{':
     {
         Statement *st = Stmt();
@@ -204,7 +205,7 @@ Seq *Parser::Stmts()
 
 Statement *Parser::Stmt()
 {
-    // stmt  -> plusplus local plusplus;
+    // stmt  -> basic;
     //        | local assig bool;
     //        | return bool;
     //        | if (bool) stmt
@@ -217,84 +218,16 @@ Statement *Parser::Stmt()
 
     switch (lookahead->tag)
     {
-    // stmt  -> plusplus local;
+    // stmt  -> basic;
     case Tag::PLUSPLUS:
     case Tag::LESSLESS:
-    {
-        Token t = *lookahead;
-        Match(lookahead->tag);
-        Expression *left = Local();
-        Expression *constant = new Constant(ExprType::INT, new Token{'1'});
-        Expression *right = new Arithmetic(left->type, new Token(t), left, constant);
-
-        stmt = new Assign(left, right);
-        if (!Match(';'))
-        {
-            stringstream ss;
-            ss << "esperado ; no lugar de  \'" << lookahead->lexeme << "\'";
-            throw SyntaxError{scanner->Lineno(), ss.str()};
-        }
-        return stmt;
-    }
-
-    // stmt -> local plusplus;
-    //       | local assig bool;
     case Tag::ID:
     {
-        Expression *left = Local();
-        Expression *right;
-
-        switch (lookahead->tag)
-        {
-        // stmt -> local plusplus;
-        case Tag::PLUSPLUS:
-        case Tag::LESSLESS:
-        {
-            Expression *constant = new Constant(ExprType::INT, new Token{'1'});
-            right = new Arithmetic(left->type, new Token(*lookahead), left, constant);
-            Match(lookahead->tag);
-            break;
-        }
-
-        // stmt -> local assig bool;
-        case Tag::ATTADD:
-        case Tag::ATTSUB:
-        case Tag::ATTMUL:
-        case Tag::ATTDIV:
-        {
-            Token t = *lookahead;
-            Match(lookahead->tag);
-            Expression *expr = Bool();
-            right = new Arithmetic(left->type, new Token(t), left, expr);
-            break;
-        }
-        case Tag::ATTAND:
-        case Tag::ATTOR:
-        {
-            Token t = *lookahead;
-            Match(lookahead->tag);
-            Expression *expr = Bool();
-            right = new Logical(new Token(t), left, expr);
-            break;
-        }
-        case '=':
-        {
-            right = Bool();
-            break;
-        }
-        default:
-        {
-            stringstream ss;
-            ss << "não esperado \'" << lookahead->lexeme << "\' após a chamada de " << left->token->lexeme;
-            throw SyntaxError{scanner->Lineno(), ss.str()};
-        }
-        }
-
-        stmt = new Assign(left, right);
+        stmt = Basic();
         if (!Match(';'))
         {
             stringstream ss;
-            ss << "esperado ; no lugar de  \'" << lookahead->lexeme << "\'";
+            ss << "esperado ';' no lugar de  \'" << lookahead->lexeme << "\'.";
             throw SyntaxError{scanner->Lineno(), ss.str()};
         }
         return stmt;
@@ -400,6 +333,13 @@ Statement *Parser::Stmt()
     // stmt -> for (stmts; bool; stmt) stmt
     case Tag::FOR:
     {
+        // ------------------------------------
+        // nova tabela de símbolos para o bloco
+        // ------------------------------------
+        SymTable *saved = varTable;
+        varTable = new SymTable(varTable);
+        // ------------------------------------
+
         Match(Tag::FOR);
         if (!Match('('))
         {
@@ -423,12 +363,6 @@ Statement *Parser::Stmt()
             throw SyntaxError{scanner->Lineno(), ss.str()};
             break;
         }
-        if (!Match(';'))
-        {
-            stringstream ss;
-            ss << "esperado ( no lugar de  \'" << lookahead->lexeme << "\'";
-            throw SyntaxError{scanner->Lineno(), ss.str()};
-        }
 
         Expression *cond = Bool();
         if (!Match(';'))
@@ -438,13 +372,7 @@ Statement *Parser::Stmt()
             throw SyntaxError{scanner->Lineno(), ss.str()};
         }
 
-        Statement *icrmt = Stmt();
-        if (!Match(';'))
-        {
-            stringstream ss;
-            ss << "esperado ( no lugar de  \'" << lookahead->lexeme << "\'";
-            throw SyntaxError{scanner->Lineno(), ss.str()};
-        }
+        Statement *icrmt = Basic();
 
         if (!Match(')'))
         {
@@ -455,6 +383,14 @@ Statement *Parser::Stmt()
         Statement *inst = Stmt();
 
         stmt = new For(ctrl, cond, icrmt, inst);
+
+        // ------------------------------------------------------
+        // tabela do escopo envolvente volta a ser a tabela ativa
+        // ------------------------------------------------------
+        delete varTable;
+        varTable = saved;
+        // ------------------------------------------------------
+
         return stmt;
     }
 
@@ -462,6 +398,108 @@ Statement *Parser::Stmt()
     case '{':
     {
         stmt = Scope();
+        return stmt;
+    }
+
+    default:
+    {
+        stringstream ss;
+        ss << "\'" << lookahead->lexeme << "\' não inicia uma instrução válida";
+        throw SyntaxError{scanner->Lineno(), ss.str()};
+    }
+    }
+}
+
+Statement *Parser::Basic()
+{
+    // basic -> plusplus local plusplus
+    //        | local assig bool
+
+    Statement *stmt = nullptr;
+
+    switch (lookahead->tag)
+    {
+    // basic  -> plusplus local;
+    case Tag::PLUSPLUS:
+    case Tag::LESSLESS:
+    {
+        Token t = *lookahead;
+        Match(lookahead->tag);
+        Expression *left = Local();
+        Expression *constant = new Constant(ExprType::INT, new Token{'1'});
+        Expression *right = new Arithmetic(left->type, new Token(t), left, constant);
+
+        stmt = new Assign(left, right);
+        if (!Match(';'))
+        {
+            stringstream ss;
+            ss << "esperado ; no lugar de  \'" << lookahead->lexeme << "\'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+        return stmt;
+    }
+
+    // basic -> local plusplus;
+    //        | local assig bool;
+    case Tag::ID:
+    {
+        Expression *left = Local();
+        Expression *right = nullptr;
+
+        switch (lookahead->tag)
+        {
+        // stmt -> local plusplus;
+        case Tag::PLUSPLUS:
+        case Tag::LESSLESS:
+        {
+            Expression *constant = new Constant(ExprType::INT, new Token{'1'});
+            right = new Arithmetic(left->type, new Token(*lookahead), left, constant);
+            Match(lookahead->tag);
+            break;
+        }
+
+        // stmt -> local assig bool;
+        case Tag::ATTADD:
+        case Tag::ATTSUB:
+        case Tag::ATTMUL:
+        case Tag::ATTDIV:
+        {
+            Token t = *lookahead;
+            Match(lookahead->tag);
+            Expression *expr = Bool();
+            right = new Arithmetic(left->type, new Token(t), left, expr);
+            break;
+        }
+        case Tag::ATTAND:
+        case Tag::ATTOR:
+        {
+            Token t = *lookahead;
+            Match(lookahead->tag);
+            Expression *expr = Bool();
+            right = new Logical(new Token(t), left, expr);
+            break;
+        }
+        case '=':
+        {
+            Match('=');
+            right = Bool();
+            break;
+        }
+        case ';':
+            break;
+        default:
+        {
+            stringstream ss;
+            ss << "não esperado \'" << lookahead->lexeme << "\' após a chamada de " << left->token->lexeme;
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+        }
+        
+        if (right)
+            stmt = new Assign(left, right);
+        else
+            stmt = new Assign(left);
+
         return stmt;
     }
     default:
