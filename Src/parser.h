@@ -12,20 +12,21 @@ class Parser
 {
 private:
 	FuncTable *funcTable;
-	SymTable *varTable;
-	SymTable *paramTable;
+	SymTable *globalTable;
+	
+	Fun *funcInfo;
+	SymTable *symTable;
+
 	Token *lookahead;
 
 	Program *Prog();
 	Seq *Funcs();
 	Function *Func();
-	Seq *Params();
-	Statement *Scope();
+	void Params();
 	Seq *Stmts();
 	Statement *Decl();
-	Statement *Stmt();
 	Statement *Attribution();
-	Statement *Structure();
+	Statement *Scope();
 	Expression *Local();
 	Expression *Bool();
 	Expression *Join();
