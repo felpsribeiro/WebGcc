@@ -4,7 +4,7 @@ prog        ::= funcs
 
 funcs       ::= func funcs
               | NULL
-func        ::= type id(params) block
+func        ::= type id(params) { stmts }
 
 params      ::= param tail
               | NULL
@@ -12,37 +12,33 @@ tail        ::= , param tail
               | NULL
 param       ::= type id
 
-block       ::= { stmts }
-
-stmts       ::= decl stmts
-	          | stmt stmts
+stmts       ::= decl ; stmts
+	          | assign ; stmts
+              | return bool ; stmts
+              | block stmts
               | NULL
 
-decl        ::= type id index assign;
+decl        ::= type id index valor
 index       ::= [ integer ]
               | NULL
-assign      ::= = bool
+valor       ::= = bool
 	          | NULL
 
-stmt        ::= assign;
-              | return bool;
-              | block
-              | struc
+assign      ::= plusplus local 
+              | local plusplus
+              | local oper valor
 
-struc       ::= if (bool) stmts
+block       ::= { stmts }
+              | if (bool) stmts
               | if (bool) stmts else stmts
               | while (bool) stmts
               | do stmts while (bool);
-              | for (stmts bool; basic) stmts
-
-assign      ::= plusplus local plusplus
-              | local symb bool
+              | for (decl ; bool ; assign) stmts
+              | for (assign ; bool ; assign) stmts
 
 plusplus    ::= ++
               | --
-              | NULL
 
-symb       ::= oper =
 oper        ::= +
               | -
               | *
