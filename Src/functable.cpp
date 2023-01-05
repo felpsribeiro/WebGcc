@@ -2,31 +2,39 @@
 #include <sstream>
 using std::stringstream;
 
-Fun::Fun(int r, string n, Seq *pp) : rtr(r), name(n), params(pp)
+Fun::Fun(int r, string n, SymMap p) : rtr(r), name(n), params(p)
 {
-	stringstream ss;
-	ss << n;
+	key = Key(n, &p);
+}
 
-	Seq *seq = pp;
-	while (seq != nullptr)
+bool Fun::InsertLocal(string name, Symbol var)
+{
+	auto found = locals.find(name);
+	if (found != locals.end())
+		name.insert(name.end(), '_');
+	else
 	{
-		Param *param = (Param *)(seq->elemt);
-		ss << param->type;
-		seq = seq->elemts;
+		found = params.find(name);
+		if (found != locals.end())
+			name.insert(name.end(), '_');
 	}
 
-	key = ss.str();
+	const auto &[pos, success] = locals.insert({name, var});
+	return success;
 }
 
-// construtor para a primeira tabela
-FuncTable::FuncTable() : prev(nullptr)
+string Fun::Key(string name, SymMap *p)
 {
+	stringstream ss;
+	ss << name;
+
+	for (SymMap::iterator it = (*p).begin(); it != (*p).end(); ++it)
+		ss << it->second.type;
+
+	return ss.str();
 }
 
-// construtor para novas tabelas
-FuncTable::FuncTable(FuncTable *t) : prev(t)
-{
-}
+FuncTable::FuncTable() {}
 
 // insere um símbolo na tabela
 bool FuncTable::Insert(string n, Fun fun)
@@ -43,18 +51,4 @@ Fun *FuncTable::Find(string f)
 		return &found->second;
 
 	return nullptr;
-}
-
-string FuncTable::Key(string name, Seq *args)
-{
-	stringstream ss;
-	ss << name;
-	Seq *seq = args;
-	while (seq != nullptr)
-	{
-		Expression *param = (Expression *)(seq->elemt);
-		ss << param->type;
-		seq = seq->elemts;
-	}
-	return ss.str();
 }
