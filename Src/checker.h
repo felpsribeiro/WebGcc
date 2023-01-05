@@ -2,10 +2,11 @@
 #define COMPILER_CHECKER
 
 #include <string>
-using namespace std;
 #include "ast.h"
+using namespace std;
 
-string Tab();
+
+
 string ConvertType(int);
 void TestLexer();
 void TestParser(Node *);
