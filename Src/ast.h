@@ -4,6 +4,7 @@
 
 #include "lexer.h"
 #include "symtable.h"
+#include "functable.h"
 
 enum NodeType
 {
@@ -22,7 +23,6 @@ enum NodeType
     ARI,
     UNARY,
     BLOCK,
-    STRUC,
     SEQ,
     ASSIGN,
     RETURN_STMT,
@@ -122,43 +122,23 @@ struct UnaryExpr : public Expression
 struct CallFunc : public Expression
 {
     Seq *args;
-
+    
     CallFunc(int type, string n, Seq *aa);
 };
 
 struct Block : public Statement
 {
     Seq *seq;
-    SymMap table;
-    Block(Seq *s, SymMap t);
-};
-
-struct Struc : public Statement
-{
-    Statement *stmt;
-    SymMap table;
-    Struc(Statement *s, SymMap t);
+    Block(Seq *s);
 };
 
 struct Function : public Node
 {
-    int type;         // tipo de retorno da função
-    string name;      // nome da função
-    Seq *params;      // sequência de parâmetros da função
-    Statement *block; // instruções do corpo da função
+    Fun *info; // informações da função
+    Seq *seq;  // instruções do corpo da função
 
     Function();
-    Function(int t, string n, Seq *pp, Statement *b);
-};
-
-struct Param : public Node
-{
-    int type;    // tipo do parametro
-    string name; // nome do parametro
-    int valor;   // valor do parametro
-
-    Param(int t, string n);
-    Param(int t, int v);
+    Function(Fun *f, Seq *s);
 };
 
 struct Program : public Node
@@ -171,7 +151,6 @@ struct Assign : public Statement
 {
     Expression *id;
     Expression *expr;
-    Assign(Expression *i);
     Assign(Expression *i, Expression *e);
 };
 
@@ -184,23 +163,23 @@ struct Return : public Statement
 struct If : public Statement
 {
     Expression *expr;
-    Statement *stmt;
-    Statement *stmtElse;
-    If(Expression *e, Statement *s, Statement *ss);
+    Seq *stmt;
+    Seq *stmtElse;
+    If(Expression *e, Seq *s, Seq *ss);
 };
 
 struct While : public Statement
 {
     Expression *expr;
-    Statement *stmt;
-    While(Expression *e, Statement *s);
+    Seq *stmt;
+    While(Expression *e, Seq *s);
 };
 
 struct DoWhile : public Statement
 {
-    Statement *stmt;
+    Seq *stmt;
     Expression *expr;
-    DoWhile(Statement *s, Expression *e);
+    DoWhile(Seq *s, Expression *e);
 };
 
 struct For : public Statement
@@ -208,8 +187,8 @@ struct For : public Statement
     Statement *ctrl;
     Expression *cond;
     Statement *icrmt;
-    Statement *stmt;
-    For(Statement *ct, Expression *co, Statement * ic, Statement *s);
+    Seq *stmt;
+    For(Statement *ct, Expression *co, Statement *ic, Seq *s);
 };
 
 #endif

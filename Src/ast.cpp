@@ -37,15 +37,7 @@ Program::Program(Seq *f) : Node(NodeType::PROGRAM), funcs(f) {}
 // ---------
 
 Function::Function() : Node(NodeType::FUNC) {}
-Function::Function(int t, string n, Seq *pp, Statement *b)
-    : Node(NodeType::FUNC), type(t), name(n), params(pp), block(b) {}
-
-// ---------
-// Param
-// ---------
-
-Param::Param(int t, string n) : Node(NodeType::PARAM), type(t), name(n) {}
-Param::Param(int t, int v) : Node(NodeType::PARAM), type(t), valor(v) {}
+Function::Function(Fun *f, Seq *s) : Node(NodeType::FUNC), info(f), seq(s) {}
 
 // ---------
 // Statement
@@ -181,13 +173,7 @@ CallFunc::CallFunc(int type, string n, Seq *aa) : Expression(NodeType::CALL, typ
 // Block
 // -----
 
-Block::Block(Seq *s, SymMap t) : Statement(NodeType::BLOCK), seq(s), table(t) {}
-
-// -----
-// Struc
-// -----
-
-Struc::Struc(Statement *s, SymMap t) : Statement(NodeType::STRUC), stmt(s), table(t) {}
+Block::Block(Seq *s) : Statement(NodeType::BLOCK), seq(s) {}
 
 // ----
 // Seq
@@ -199,8 +185,6 @@ Seq::Seq(Node *e, Seq *ee) : Node(NodeType::SEQ), elemt(e), elemts(ee) {}
 // ------
 // Assign
 // ------
-
-Assign::Assign(Expression *i) : Statement(NodeType::ASSIGN), id(i) {}
 
 Assign::Assign(Expression *i, Expression *e) : Statement(NodeType::ASSIGN), id(i), expr(e)
 {
@@ -225,22 +209,22 @@ Return::Return(Expression *e) : Statement(NodeType::RETURN_STMT), expr(e) {}
 // If
 // ----
 
-If::If(Expression *e, Statement *s, Statement *ss) : Statement(NodeType::IF_STMT), expr(e), stmt(s), stmtElse(ss) {}
+If::If(Expression *e, Seq *s, Seq *ss) : Statement(NodeType::IF_STMT), expr(e), stmt(s), stmtElse(ss) {}
 
 // -----
 // While
 // -----
 
-While::While(Expression *e, Statement *s) : Statement(NodeType::WHILE_STMT), expr(e), stmt(s) {}
+While::While(Expression *e, Seq *s) : Statement(NodeType::WHILE_STMT), expr(e), stmt(s) {}
 
 // --------
 // Do-While
 // --------
 
-DoWhile::DoWhile(Statement *s, Expression *e) : Statement(NodeType::DOWHILE_STMT), stmt(s), expr(e) {}
+DoWhile::DoWhile(Seq *s, Expression *e) : Statement(NodeType::DOWHILE_STMT), stmt(s), expr(e) {}
 
 // --------
 // For
 // --------
 
-For::For(Statement *ct, Expression *co, Statement *ic, Statement *s) : Statement(NodeType::FOR_STMT), ctrl(ct), cond(co), icrmt(ic), stmt(s) {}
+For::For(Statement *ct, Expression *co, Statement *ic, Seq *s) : Statement(NodeType::FOR_STMT), ctrl(ct), cond(co), icrmt(ic), stmt(s) {}
