@@ -1,5 +1,7 @@
 #include "symtable.h"
 
+unsigned int SymTable::depth = 0;
+
 // construtor para a primeira tabela
 SymTable::SymTable() : prev(nullptr)
 {
@@ -8,6 +10,13 @@ SymTable::SymTable() : prev(nullptr)
 // construtor para novas tabelas
 SymTable::SymTable(SymTable *t) : prev(t)
 {
+	depth++;
+}
+
+SymTable::~SymTable()
+{
+	if (depth > 0)
+		depth--;
 }
 
 // insere um símbolo na tabela

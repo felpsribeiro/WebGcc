@@ -11,6 +11,7 @@ struct Symbol
 {
 	int type;
 	string name;
+	unsigned int depth;
 };
 
 typedef unordered_map<string, Symbol> SymMap;
@@ -25,10 +26,13 @@ private:
 public:
 	SymTable();
 	SymTable(SymTable *t);
+	~SymTable();
 
 	bool Insert(string s, Symbol symb);
 	Symbol *Find(string s);
 	SymMap Table() { return table; };
+	
+	static unsigned int depth;
 };
 
 #endif
