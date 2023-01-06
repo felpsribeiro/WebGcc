@@ -53,23 +53,6 @@ Statement::Statement(int type) : Node(type) {}
 Expression::Expression(Token *t) : Node(NodeType::EXPR), type(ExprType::VOID), token(t) {}
 Expression::Expression(int ntype, int type, Token *t) : Node(ntype), type(type), token(t) {}
 
-string Expression::Name()
-{
-    switch (token->tag)
-    {
-    case '+':
-        return "i32.add ";
-    case '-':
-        return "i32.sub ";
-    case '*':
-        return "i32.mul";
-    case '/':
-        return "i32.div_u";
-    default:
-        return token->lexeme;
-    }
-}
-
 string Expression::Type()
 {
     switch (type)
@@ -98,7 +81,13 @@ Constant::Constant(int type, Token *t) : Expression(NodeType::CONSTANT, type, t)
 // Identifier
 // ----------
 
-Identifier::Identifier(int etype, Token *t) : Expression(NodeType::IDENTIFIER, etype, t) {}
+Identifier::Identifier(int etype, Token *t) : Expression(NodeType::IDENTIFIER, etype, t), key(t->lexeme) {}
+Identifier::Identifier(int etype, Token *t, unsigned int d) : Expression(NodeType::IDENTIFIER, etype, t)
+{
+    key = t->lexeme;
+    for (int i = 0; i < d; i++)
+        key += '_';
+}
 
 // ------
 // Access

@@ -71,7 +71,7 @@ struct Expression : public Node
 
     Expression(Token *t);
     Expression(int ntype, int type, Token *t);
-    string Name();
+    string Name() { return token->lexeme; };
     string Type();
 };
 
@@ -82,7 +82,10 @@ struct Constant : public Expression
 
 struct Identifier : public Expression
 {
+    string key;
+
     Identifier(int etype, Token *t);
+    Identifier(int etype, Token *t, unsigned int d);
 };
 
 struct Access : public Expression
