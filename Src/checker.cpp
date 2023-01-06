@@ -135,7 +135,7 @@ void Traverse(Node *n)
             fout << count->Tab() << "(func $" << f->info->name;
 
             // parâmetros da função
-            for (auto &local : f->info->locals)
+            for (auto &local : f->info->params)
             {
                 fout << " (param $" << local.first << " " << ConvertType(local.second.type) << ")";
             }
@@ -179,7 +179,8 @@ void Traverse(Node *n)
             // não utilizo enquanto nao estou lidando com arrays
             // Traverse(a->id);
             Traverse(a->expr);
-            fout << count->Tab() << "local.set $" << a->id->Name() << endl;
+            Identifier *i = (Identifier *)a->id;
+            fout << count->Tab() << "local.set $" << i->key << endl;
             break;
         }
         case REL:
@@ -299,7 +300,7 @@ void Traverse(Node *n)
         case IDENTIFIER:
         {
             Identifier *i = (Identifier *)n;
-            fout << count->Tab() << "local.get $" << i->token->lexeme << endl;
+            fout << count->Tab() << "local.get $" << i->key << endl;
             break;
         }
         case ACCESS:

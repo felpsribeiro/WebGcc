@@ -232,19 +232,19 @@ Statement *Parser::Attribution()
 
         switch (lookahead->tag)
         {
-        // assign -> local plusplus;
+        // assign -> local plusplus
         case Tag::PLUSPLUS:
         case Tag::LESSLESS:
         {
             Expression *constant = new Constant(ExprType::INT, new Token{'1'});
-            Match(lookahead->tag);
             right = new Arithmetic(left->type, new Token(*lookahead), left, constant);
+            Match(lookahead->tag);
 
             stmt = new Assign(left, right);
             break;
         }
 
-        // assign -> local assig bool;
+        // assign -> local assig bool
         case Tag::ATTADD:
         case Tag::ATTSUB:
         case Tag::ATTMUL:
@@ -504,7 +504,7 @@ Statement *Parser::Decl()
     Match(Tag::ID);
 
     // cria símbolo
-    Symbol s{type, name};
+    Symbol s{type, name, SymTable::depth};
 
     // insere variável na tabela de símbolos
     if (!symTable->Insert(name, s))
@@ -515,6 +515,8 @@ Statement *Parser::Decl()
         throw SyntaxError(scanner->Lineno(), ss.str());
     }
 
+    for (int i = 0; i < SymTable::depth; i++)
+        name += '_';
     funcInfo->InsertLocal(name, s);
 
     // verifica se é uma declaração de arranjo
@@ -553,7 +555,7 @@ Expression *Parser::Local()
     // position -> [bool]
     //           | empty
 
-    // local    -> id position
+    // local -> id position
     if (lookahead->tag == Tag::ID)
     {
         // verifica se a variável existe na tabela de varaiveis
@@ -566,7 +568,7 @@ Expression *Parser::Local()
         }
 
         // identificador
-        Expression *expr = new Identifier(s->type, new Token{*lookahead});
+        Expression *expr = new Identifier(s->type, new Token{*lookahead}, s->depth);
         Match(Tag::ID);
 
         // position -> [bool]
