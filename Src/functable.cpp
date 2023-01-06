@@ -9,16 +9,6 @@ Fun::Fun(int r, string n, SymMap p) : rtr(r), name(n), params(p)
 
 bool Fun::InsertLocal(string name, Symbol var)
 {
-	auto found = locals.find(name);
-	if (found != locals.end())
-		name.insert(name.end(), '_');
-	else
-	{
-		found = params.find(name);
-		if (found != locals.end())
-			name.insert(name.end(), '_');
-	}
-
 	const auto &[pos, success] = locals.insert({name, var});
 	return success;
 }
