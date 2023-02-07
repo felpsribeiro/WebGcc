@@ -2,9 +2,9 @@
 #define COMPILER_SYMTABLE
 
 #include <string>
-#include <unordered_map>
+#include <map>
 using std::string;
-using std::unordered_map;
+using std::map;
 
 // modelo para símbolos
 struct Symbol
@@ -14,7 +14,7 @@ struct Symbol
 	unsigned int depth;
 };
 
-typedef unordered_map<string, Symbol> SymMap;
+typedef map<string, Symbol> SymMap;
 
 // tabela de símbolos
 class SymTable
