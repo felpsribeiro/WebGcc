@@ -132,7 +132,7 @@ void Traverse(Node *n)
             Function *f = (Function *)n;
 
             // declara função e seu nome
-            fout << count->Tab() << "(func $" << f->info->name;
+            fout << count->Tab() << "(func $" << f->info->key;
 
             // parâmetros da função
             for (auto &local : f->info->params)
@@ -264,6 +264,9 @@ void Traverse(Node *n)
             case Tag::ATTDIV:
                 fout << "i32.div_s" << endl;
                 break;
+            case '%':
+                fout << "i32.rem_s" << endl;
+                break;
             default:
                 fout << "erro na compilação" << endl;
                 break;
@@ -275,17 +278,16 @@ void Traverse(Node *n)
         {
             UnaryExpr *u = (UnaryExpr *)n;
             Traverse(u->expr);
-
-            fout << count->Tab();
+            
             switch (u->type)
             {
             case ExprType::INT:
             case ExprType::FLOAT:
-                fout << "i32.const -1" << endl;
-                fout << "i32.mul" << endl;
+                fout << count->Tab() << "i32.const -1" << endl;
+                fout << count->Tab() << "i32.mul" << endl;
                 break;
             case ExprType::BOOL:
-                fout << "i32.eqz" << endl;
+                fout << count->Tab() << "i32.eqz" << endl;
                 break;
             }
 
@@ -294,7 +296,7 @@ void Traverse(Node *n)
         case CONSTANT:
         {
             Constant *c = (Constant *)n;
-            fout << count->Tab() << "i32.const " << c->token->lexeme << endl;
+            fout << count->Tab() << "i32.const " << c->Name() << endl;
             break;
         }
         case IDENTIFIER:
@@ -312,11 +314,17 @@ void Traverse(Node *n)
             fout << "] ";
             break;
         }
+        case EXECUTE:
+        {
+            Execute *e = (Execute *)n;
+            Traverse(e->func);
+            break;
+        }
         case CALL:
         {
             CallFunc *a = (CallFunc *)n;
             Traverse(a->args);
-            fout << count->Tab() << "call $" << a->token->lexeme << endl;
+            fout << count->Tab() << "call $" << a->Name() << endl;
             break;
         }
         case RETURN_STMT:
@@ -332,18 +340,22 @@ void Traverse(Node *n)
 
             Traverse(i->expr);
             fout << count->Tab(count->depth++) << "(if" << endl;
+
             fout << count->Tab(count->depth++) << "(then" << endl;
             Traverse(i->stmt);
-            fout << count->Tab(count->depth--) << ")" << endl;
+            count->depth--;
+            fout << count->Tab() << ")" << endl;
 
             if (i->stmtElse)
             {
                 fout << count->Tab(count->depth++) << "(else" << endl;
                 Traverse(i->stmtElse);
-                fout << count->Tab(count->depth--) << ")" << endl;
+                count->depth--;
+                fout << count->Tab() << ")" << endl;
             }
 
-            fout << count->Tab(count->depth--) << ")" << endl;
+            count->depth--;
+            fout << count->Tab() << ")" << endl;
 
             break;
         }
