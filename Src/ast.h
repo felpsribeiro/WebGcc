@@ -12,6 +12,7 @@ enum NodeType
     PROGRAM,
     FUNC,
     CALL,
+    EXECUTE,
     PARAM,
     STMT,
     EXPR,
@@ -125,7 +126,7 @@ struct UnaryExpr : public Expression
 struct CallFunc : public Expression
 {
     Seq *args;
-    
+
     CallFunc(int type, string n, Seq *aa);
 };
 
@@ -148,6 +149,12 @@ struct Program : public Node
 {
     Seq *funcs;
     Program(Seq *f);
+};
+
+struct Execute : public Statement
+{
+    Expression *func;
+    Execute(Expression *f);
 };
 
 struct Assign : public Statement

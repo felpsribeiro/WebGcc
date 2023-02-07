@@ -7,16 +7,16 @@ extern Lexer *scanner;
 
 int ConvertToExprType(string type)
 {
-    int etype = ExprType::VOID;
-
     if (type == "int")
-        etype = INT;
+        return ExprType::INT;
     else if (type == "float")
-        etype = FLOAT;
+        return ExprType::FLOAT;
     else if (type == "bool")
-        etype = BOOL;
-
-    return etype;
+        return ExprType::BOOL;
+    else if (type == "void")
+        return ExprType::VOID;
+    else
+        throw SyntaxError(scanner->Lineno(), "esperado um tipo válido para a função");
 }
 
 // ----
@@ -170,6 +170,12 @@ Block::Block(Seq *s) : Statement(NodeType::BLOCK), seq(s) {}
 
 Seq::Seq(Node *e) : Node(NodeType::SEQ), elemt(e) {}
 Seq::Seq(Node *e, Seq *ee) : Node(NodeType::SEQ), elemt(e), elemts(ee) {}
+
+// ------
+// Execute
+// ------
+
+Execute::Execute(Expression *f) : Statement(NodeType::EXECUTE), func(f) {}
 
 // ------
 // Assign
