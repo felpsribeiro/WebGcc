@@ -9,7 +9,7 @@ extern std::ifstream fin;
 Lexer::Lexer()
 {
 	// insere palavras-reservadas na tabela
-	// token_table["main"]  = Token{ Tag::MAIN, "main" };
+	token_table["void"] = Token{Tag::TYPE, "void"};
 	token_table["int"] = Token{Tag::TYPE, "int"};
 	token_table["float"] = Token{Tag::TYPE, "float"};
 	token_table["bool"] = Token{Tag::TYPE, "bool"};
@@ -132,14 +132,14 @@ Token *Lexer::Scan()
 	}
 
 	// retorna palavras-chave e identificadores
-	if (isalpha(peek))
+	if (isalpha(peek) || peek == '_')
 	{
 		stringstream ss;
 		do
 		{
 			ss << peek;
 			peek = fin.get();
-		} while (isalpha(peek));
+		} while (isalpha(peek) || isdigit(peek) || peek == '_');
 
 		string s = ss.str();
 		auto pos = token_table.find(s);
@@ -231,6 +231,22 @@ Token *Lexer::Scan()
 		{
 			peek = fin.get();
 			token = Token{Tag::ATTDIV, "/="};
+			return &token;
+		}
+		else
+		{
+			fin.unget();
+		}
+		break;
+	}
+
+	case '%':
+	{
+		char next = fin.get();
+		if (next == '=')
+		{
+			peek = fin.get();
+			token = Token{Tag::ATTREM, "%="};
 			return &token;
 		}
 		else
