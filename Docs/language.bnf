@@ -12,21 +12,24 @@ tail        ::= , param tail
               | NULL
 param       ::= type id
 
-stmts       ::= decl ; stmts
-	          | assign ; stmts
-              | return bool ; stmts
-              | block stmts
+stmts       ::= stmt stmts
               | NULL
 
-decl        ::= type id index valor
+stmt        ::= decl;
+	          | assign;
+              | call;
+              | return bool;
+              | blok
+
+decl        ::= type id index value
 index       ::= [ integer ]
               | NULL
-valor       ::= = bool
+value       ::= = bool
 	          | NULL
 
-assign      ::= plusplus local 
+assign      ::= plusplus local
               | local plusplus
-              | local oper valor
+              | local oper = bool
 
 block       ::= { stmts }
               | if (bool) stmts
@@ -43,6 +46,7 @@ oper        ::= +
               | -
               | *
               | /
+              | %
               | &
               | |
               | NULL
@@ -79,6 +83,7 @@ oper        ::= + term oper
 term        ::= unary calc
 calc        ::= * unary calc
               | / unary calc
+              | % unary calc
               | NULL
 
 unary       ::= !unary
