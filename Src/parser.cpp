@@ -33,7 +33,7 @@ Seq *Parser::Funcs()
 
 Function *Parser::Func()
 {
-    // func  -> type id(params) { scope }
+    // func -> type id(params) { scope }
 
     // captura nome do tipo de retorno
     int type = ConvertToExprType(lookahead->lexeme);
@@ -51,7 +51,9 @@ Function *Parser::Func()
 
     if (!Match('('))
         throw SyntaxError(scanner->Lineno(), "\'(\' esperado");
+
     Params();
+
     if (!Match(')'))
         throw SyntaxError(scanner->Lineno(), "\')\' esperado");
 
@@ -62,7 +64,7 @@ Function *Parser::Func()
     funcInfo = new Fun(type, name, symTable->Table());
 
     // insere função na tabela de funções
-    if (!funcTable->Insert(name, *funcInfo))
+    if (!funcTable->Insert(funcInfo->key, *funcInfo))
     {
         // a inserção falha quando a função já está na tabela
         stringstream ss;
@@ -126,17 +128,31 @@ void Parser::Params()
 
 Seq *Parser::Stmts()
 {
-    // stmts -> decl ; stmts
-    //        | assign ; stmts
-    //        | return bool ; stmts
-    //        | block stmts
-    //        | empty
+    // stmts -> stmt stmts;
+    //        | empty;
 
     Seq *stmts = nullptr;
 
+    if (lookahead->tag != '}')
+        stmts = new Seq(Stmt(), Stmts());
+
+    // stmts -> empty
+    return stmts;
+}
+
+Statement *Parser::Stmt()
+{
+    // stmt -> decl;
+    //       | assign;
+    //       | call;
+    //       | return bool;
+    //       | block
+
+    Statement *stmt = nullptr;
+
     switch (lookahead->tag)
     {
-    // stmts -> decl stmts
+    // stmt -> decl
     case Tag::TYPE:
     {
         Statement *st = Decl();
@@ -148,13 +164,11 @@ Seq *Parser::Stmts()
             throw SyntaxError{scanner->Lineno(), ss.str()};
         }
 
-        stmts = new Seq(st, Stmts());
-        break;
+        return st;
     }
-    // stmts -> assign ; stmts
+    // stmts -> assign;
     case Tag::PLUSPLUS:
     case Tag::LESSLESS:
-    case Tag::ID:
     {
         Statement *st = Attribution();
         if (!Match(';'))
@@ -164,9 +178,32 @@ Seq *Parser::Stmts()
             throw SyntaxError{scanner->Lineno(), ss.str()};
         }
 
-        stmts = new Seq(st, Stmts());
-        break;
+        return st;
     }
+    // stmt -> call;
+    //       | assign;
+    case Tag::ID:
+    {
+        Statement *st;
+
+        // stmt -> call;
+        if (scanner->Peek() == '(')
+            st = new Execute(Call());
+
+        // stmt -> assign;
+        else
+            st = Attribution();
+
+        if (!Match(';'))
+        {
+            stringstream ss;
+            ss << "encontrado \'" << lookahead->lexeme << "\' no lugar de ';'";
+            throw SyntaxError{scanner->Lineno(), ss.str()};
+        }
+
+        return st;
+    }
+    // stmt -> return bool;
     case Tag::RETURN:
     {
         Match(Tag::RETURN);
@@ -179,31 +216,31 @@ Seq *Parser::Stmts()
             throw SyntaxError{scanner->Lineno(), ss.str()};
         }
 
-        stmts = new Seq(st, Stmts());
-        break;
+        return st;
     }
+    // stmt -> block
     case '{':
     case Tag::IF:
     case Tag::WHILE:
     case Tag::DO:
     case Tag::FOR:
     {
-        // stmt -> block stmts
-        Statement *st = Scope();
-        stmts = new Seq(st, Stmts());
-        break;
+        return Scope();
+    }
+    default:
+    {
+        stringstream ss;
+        ss << "esperado uma instrução no lugar de  \'" << lookahead->lexeme << "\'.";
+        throw SyntaxError{scanner->Lineno(), ss.str()};
     }
     }
-
-    // stmts -> empty
-    return stmts;
 }
 
 Statement *Parser::Attribution()
 {
     // assign -> plusplus local
     //        | local plusplus
-    //        | local oper valor
+    //        | local oper = bool
 
     Statement *stmt = nullptr;
 
@@ -224,7 +261,7 @@ Statement *Parser::Attribution()
     }
 
     // assign -> local plusplus
-    //         | local oper valor
+    //         | local oper = bool
     case Tag::ID:
     {
         Expression *left = Local();
@@ -244,11 +281,12 @@ Statement *Parser::Attribution()
             break;
         }
 
-        // assign -> local assig bool
+        // assign -> local oper = bool
         case Tag::ATTADD:
         case Tag::ATTSUB:
         case Tag::ATTMUL:
         case Tag::ATTDIV:
+        case Tag::ATTREM:
         {
             Token t = *lookahead;
             Match(lookahead->tag);
@@ -275,8 +313,6 @@ Statement *Parser::Attribution()
             stmt = new Assign(left, right);
             break;
         }
-        case ';':
-            break;
         default:
         {
             stringstream ss;
@@ -344,11 +380,42 @@ Statement *Parser::Scope()
             throw SyntaxError{scanner->Lineno(), ss.str()};
         }
 
-        Seq *inst = Stmts();
-        Seq *instElse = nullptr;
+        Seq *inst;
+        if (lookahead->tag == '{')
+        {
+            Match('{');
+            inst = Stmts();
+            if (!Match('}'))
+            {
+                stringstream ss;
+                ss << "esperado } no lugar de  \'" << lookahead->lexeme << "\'";
+                throw SyntaxError{scanner->Lineno(), ss.str()};
+            }
+        }
+        else
+        {
+            inst = new Seq(Stmt());
+        }
 
+        Seq *instElse = nullptr;
         if (Match(Tag::ELSE))
-            instElse = Stmts();
+        {
+            if (lookahead->tag == '{')
+            {
+                Match('{');
+                instElse = Stmts();
+                if (!Match('}'))
+                {
+                    stringstream ss;
+                    ss << "esperado } no lugar de  \'" << lookahead->lexeme << "\'";
+                    throw SyntaxError{scanner->Lineno(), ss.str()};
+                }
+            }
+            else
+            {
+                instElse = new Seq(Stmt());
+            }
+        }
 
         block = new If(cond, inst, instElse);
         break;
@@ -372,7 +439,22 @@ Statement *Parser::Scope()
             throw SyntaxError{scanner->Lineno(), ss.str()};
         }
 
-        block = new While(cond, Stmts());
+        if (lookahead->tag == '{')
+        {
+            Match('{');
+            block = new While(cond, Stmts());
+            if (!Match('}'))
+            {
+                stringstream ss;
+                ss << "esperado } no lugar de  \'" << lookahead->lexeme << "\'";
+                throw SyntaxError{scanner->Lineno(), ss.str()};
+            }
+        }
+        else
+        {
+            block = new While(cond, new Seq(Stmt()));
+        }
+
         break;
     }
 
@@ -380,7 +462,23 @@ Statement *Parser::Scope()
     case Tag::DO:
     {
         Match(Tag::DO);
-        Seq *inst = Stmts();
+
+        Seq *inst;
+        if (lookahead->tag == '{')
+        {
+            Match('{');
+            inst = Stmts();
+            if (!Match('}'))
+            {
+                stringstream ss;
+                ss << "esperado } no lugar de  \'" << lookahead->lexeme << "\'";
+                throw SyntaxError{scanner->Lineno(), ss.str()};
+            }
+        }
+        else
+        {
+            inst = new Seq(Stmt());
+        }
 
         if (!Match(Tag::WHILE))
         {
@@ -466,7 +564,22 @@ Statement *Parser::Scope()
             throw SyntaxError{scanner->Lineno(), ss.str()};
         }
 
-        block = new For(ctrl, cond, icrmt, Stmts());
+        if (lookahead->tag == '{')
+        {
+            Match('{');
+            block = new For(ctrl, cond, icrmt, Stmts());
+            if (!Match('}'))
+            {
+                stringstream ss;
+                ss << "esperado } no lugar de  \'" << lookahead->lexeme << "\'";
+                throw SyntaxError{scanner->Lineno(), ss.str()};
+            }
+        }
+        else
+        {
+            block = new For(ctrl, cond, icrmt, new Seq(Stmt()));
+        }
+
         break;
     }
     }
@@ -777,6 +890,7 @@ Expression *Parser::Term()
     // term -> unary calc
     // calc -> * unary calc
     //       | / unary calc
+    //       | % unary calc
     //       | empty
 
     Expression *expr1 = Unary();
@@ -797,6 +911,13 @@ Expression *Parser::Term()
         else if (lookahead->tag == '/')
         {
             Match('/');
+            Expression *expr2 = Unary();
+            expr1 = new Arithmetic(expr1->type, new Token{t}, expr1, expr2);
+        }
+        // calc -> % unary calc
+        else if (lookahead->tag == '%')
+        {
+            Match('%');
             Expression *expr2 = Unary();
             expr1 = new Arithmetic(expr1->type, new Token{t}, expr1, expr2);
         }
@@ -926,7 +1047,6 @@ Expression *Parser::Factor()
 Expression *Parser::Call()
 {
     // call   -> id(args)
-
     // args   -> bool tailAr
     //         | NULL
     // tailAr -> , bool tailAr
@@ -945,14 +1065,14 @@ Expression *Parser::Call()
     }
 
     stringstream ss;
-	ss << name;
-	Seq *seq = args;
-	while (seq != nullptr)
-	{
-		Expression *param = (Expression *)(seq->elemt);
-		ss << param->type;
-		seq = seq->elemts;
-	}
+    ss << name;
+    Seq *seq = args;
+    while (seq != nullptr)
+    {
+        Expression *param = (Expression *)(seq->elemt);
+        ss << param->type;
+        seq = seq->elemts;
+    }
 
     // verifica se a função existe na tabela de varaiveis
     Fun *f = funcTable->Find(ss.str());
@@ -963,7 +1083,8 @@ Expression *Parser::Call()
         throw SyntaxError{scanner->Lineno(), ss.str()};
     }
 
-    return new CallFunc(f->rtr, name, args);
+    CallFunc *func = new CallFunc(f->rtr, ss.str(), args);
+    return func;
 }
 
 Seq *Parser::Args()

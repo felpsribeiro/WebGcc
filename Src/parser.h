@@ -13,7 +13,7 @@ class Parser
 private:
 	FuncTable *funcTable;
 	SymTable *globalTable;
-	
+
 	Fun *funcInfo;
 	SymTable *symTable;
 
@@ -24,6 +24,7 @@ private:
 	Function *Func();
 	void Params();
 	Seq *Stmts();
+	Statement *Stmt();
 	Statement *Decl();
 	Statement *Attribution();
 	Statement *Scope();
