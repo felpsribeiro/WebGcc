@@ -9,7 +9,7 @@
 using namespace std;
 
 ifstream fin;
-Lexer * scanner;
+Lexer *scanner;
 
 // programa pode receber nomes de arquivos
 int main(int argc, char **argv)
@@ -23,20 +23,20 @@ int main(int argc, char **argv)
 			exit(EXIT_FAILURE);
 		}
 
-		//TestLexer();
+		// TestLexer();
 		Lexer leitor;
 		scanner = &leitor;
-		Node * ast;		
+		Node *ast;
 		Parser tradutor;
 		try
 		{
 			ast = tradutor.Start();
+			TestParser(ast);
 		}
 		catch (SyntaxError err)
 		{
 			err.What();
 		}
 		fin.close();
-		TestParser(ast);
 	}
 }
