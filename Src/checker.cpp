@@ -3,6 +3,7 @@
 #include <sstream>
 #include "lexer.h"
 #include "checker.h"
+#include "error.h"
 using namespace std;
 
 extern ifstream fin;
@@ -430,13 +431,13 @@ void Traverse(Node *n)
     }
 }
 
-void TestParser(Node *n)
+void TestParser(Node *n, string filename)
 {
     count = new InstructionCounter();
 
-    fout.open("teste.wat");
+    fout.open(filename);
     if (!fout.good())
-        cout << "falha ao tentar abrir arquivo .wat";
+        throw OpenFileError(filename);
 
     Traverse(n);
     fout.close();

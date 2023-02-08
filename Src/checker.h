@@ -5,11 +5,9 @@
 #include "ast.h"
 using namespace std;
 
-
-
 string ConvertType(int);
 void TestLexer();
-void TestParser(Node *);
+void TestParser(Node *, string filename);
 
 struct InstructionCounter
 {
