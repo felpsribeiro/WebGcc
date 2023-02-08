@@ -3,3 +3,7 @@ Debug
 
 # Realese
 Realese
+
+# WA files
+*.wat
+*.wasm
