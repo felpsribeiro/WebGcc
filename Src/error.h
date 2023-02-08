@@ -14,4 +14,13 @@ public:
 	void What();
 };
 
+class OpenFileError 
+{
+private:
+	string desc;
+public:
+	OpenFileError(string msg);
+	void What();
+};
+
 #endif
