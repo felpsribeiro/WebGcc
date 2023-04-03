@@ -9,6 +9,12 @@ extern std::ifstream fin;
 Lexer::Lexer()
 {
 	// insere palavras-reservadas na tabela
+	token_table["include"] = Token{Tag::INCLUDE, "include"};
+	token_table["using"] = Token{Tag::USING, "using"};
+	token_table["namespace"] = Token{Tag::NAMESPACE, "namespace"};
+	token_table["iostream"] = Token{Tag::LIB, "iostream"};
+	token_table["std::cout"] = Token{Tag::PRINT, "cout"};
+	token_table["cout"] = Token{Tag::PRINT, "cout"};
 	token_table["void"] = Token{Tag::TYPE, "void"};
 	token_table["int"] = Token{Tag::TYPE, "int"};
 	token_table["float"] = Token{Tag::TYPE, "float"};
@@ -325,6 +331,12 @@ Token *Lexer::Scan()
 			token = Token{Tag::LTE, "<="};
 			return &token;
 		}
+		else if (next == '<')
+		{
+			peek = fin.get();
+			token = Token{Tag::LST, "<<"};
+			return &token;
+		}
 		else
 		{
 			fin.unget();
@@ -355,6 +367,22 @@ Token *Lexer::Scan()
 		{
 			peek = fin.get();
 			token = Token{Tag::NEQ, "!="};
+			return &token;
+		}
+		else
+		{
+			fin.unget();
+		}
+	}
+	break;
+
+	case ':':
+	{
+		char next = fin.get();
+		if (next == ':')
+		{
+			peek = fin.get();
+			token = Token{Tag::SCOPE, "::"};
 			return &token;
 		}
 		else

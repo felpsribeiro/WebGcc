@@ -30,7 +30,20 @@ Node::Node(int t) : node_type(t) {}
 // Program
 // -------
 
-Program::Program(Seq *f) : Node(NodeType::PROGRAM), funcs(f) {}
+Program::Program(Seq *s) : Node(NodeType::PROGRAM), seq(s) {}
+
+// ---------
+// Include
+// ---------
+
+Include::Include(string n) : Node(NodeType::COUT), name(n) {}
+
+// ---------
+// Using
+// ---------
+
+// Using::Using(string s) : Node(NodeType::USING), scope(s) {}
+// Using::Using(string s, string m) : Node(NodeType::USING), scope(s), method(m) {}
 
 // ---------
 // Function
@@ -99,7 +112,7 @@ Access::Access(int etype, Token *t, Expression *i, Expression *e) : Expression(N
 // Logical
 // -------
 
-Logical::Logical(Token *t, Expression *e1, Expression *e2) : Expression(NodeType::LOG, ExprType::BOOL, t), expr1(e1), expr2(e2)
+Logical::Logical(Token *t, Expression *e1, Expression *e2) : Expression(NodeType::LOGI, ExprType::BOOL, t), expr1(e1), expr2(e2)
 {
     // verificação de tipos
     if (expr1->type != ExprType::BOOL || expr2->type != ExprType::BOOL)
@@ -170,6 +183,12 @@ Block::Block(Seq *s) : Statement(NodeType::BLOCK), seq(s) {}
 
 Seq::Seq(Node *e) : Node(NodeType::SEQ), elemt(e) {}
 Seq::Seq(Node *e, Seq *ee) : Node(NodeType::SEQ), elemt(e), elemts(ee) {}
+
+// ------
+// Print
+// ------
+
+Print::Print(Seq *a) : Statement(NodeType::LOG), args(a) {}
 
 // ------
 // Execute

@@ -8,27 +8,56 @@ extern Lexer *scanner;
 
 Program *Parser::Prog()
 {
-    // prog -> funcs
-    return new Program(Funcs());
+    // program = {instr} ;
+
+    return new Program(Instr());
 }
 
-Seq *Parser::Funcs()
+Seq *Parser::Instr()
 {
-    // funcs -> func funcs
-    //        | empty
+    // instr   = include
+    //         | using
+    //         | func ;
 
-    Seq *funcs = nullptr;
-
-    if (lookahead->tag == Tag::TYPE)
+    switch (lookahead->tag)
     {
-        // funcs -> func funcs
-        Function *func = Func();
-        Seq *seq = Funcs();
-        funcs = new Seq(func, seq);
+    case '#':
+        return new Seq(Incl(), Instr());
+    // case Tag::USING:
+    //     return new Seq(Usin(), Instr());
+    case Tag::TYPE:
+        return new Seq(Func(), Instr());
+    default:
+        return nullptr;
     }
+}
 
-    // funcs -> empty
-    return funcs;
+Include *Parser::Incl()
+{
+    // include     = '#include' , lib , 'using' , 'namespace' , 'std' , ';';
+    // lib         = '<iostream>' ;
+    Match('#');
+    if (!Match(Tag::INCLUDE))
+       throw SyntaxError(scanner->Lineno(), "\"include\" esperado."); 
+
+    if (!Match('<'))
+       throw SyntaxError(scanner->Lineno(), "\'<\' esperado."); 
+    string libName{lookahead->lexeme};
+    if (!Match(Tag::LIB))
+        throw SyntaxError(scanner->Lineno(), "lib inválida.");
+    if (!Match('>'))
+       throw SyntaxError(scanner->Lineno(), "\'>\' esperado."); 
+
+    if (!Match(Tag::USING))
+        throw SyntaxError(scanner->Lineno(), "\"using\" esperado.");
+    if (!Match(Tag::NAMESPACE))
+        throw SyntaxError(scanner->Lineno(), "\"namespace\" esperado.");
+    if (!Match(Tag::ID))
+        throw SyntaxError(scanner->Lineno(), "\"std\" esperado.");
+    if (!Match(';'))
+        throw SyntaxError(scanner->Lineno(), "\';\' esperado.");
+
+    return new Include(libName);
 }
 
 Function *Parser::Func()
@@ -144,11 +173,9 @@ Statement *Parser::Stmt()
 {
     // stmt -> decl;
     //       | assign;
-    //       | call;
+    //       | void_call;
     //       | return bool;
     //       | block
-
-    Statement *stmt = nullptr;
 
     switch (lookahead->tag)
     {
@@ -203,6 +230,20 @@ Statement *Parser::Stmt()
 
         return st;
     }
+    // stmt -> 'cout' , print , {print} , ';'
+    case Tag::PRINT:
+    {
+        Match(Tag::PRINT);
+
+        if (!Match(Tag::LST))
+            throw SyntaxError{scanner->Lineno(), "\'<<\' esperado."};
+        // Seq *seq = new Seq(Bool(), Cout());
+        Seq *seq = new Seq(Bool());
+        if (!Match(';'))
+            throw SyntaxError{scanner->Lineno(), "\';\' esperado."};
+
+        return new Print(seq);
+    }
     // stmt -> return bool;
     case Tag::RETURN:
     {
@@ -235,6 +276,17 @@ Statement *Parser::Stmt()
     }
     }
 }
+
+// Seq *Parser::Cout()
+// {
+//     Seq *seq = nullptr;
+//     if (lookahead->tag == Tag::LST)
+//     {
+//         Match(Tag::LST);
+//         seq = new Seq(Bool(), Cout());
+//     }
+//     return seq;
+// }
 
 Statement *Parser::Attribution()
 {

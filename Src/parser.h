@@ -20,12 +20,14 @@ private:
 	Token *lookahead;
 
 	Program *Prog();
-	Seq *Funcs();
+	Seq *Instr();
+	Include *Incl();
 	Function *Func();
 	void Params();
 	Seq *Stmts();
 	Statement *Stmt();
 	Statement *Decl();
+	Seq *Cout();
 	Statement *Attribution();
 	Statement *Scope();
 	Expression *Local();

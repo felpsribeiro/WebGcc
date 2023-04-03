@@ -5,11 +5,13 @@
 #include "lexer.h"
 #include "symtable.h"
 #include "functable.h"
+#include <string>
 
 enum NodeType
 {
     UNKNOWN,
     PROGRAM,
+    COUT,
     FUNC,
     CALL,
     EXECUTE,
@@ -19,7 +21,7 @@ enum NodeType
     CONSTANT,
     IDENTIFIER,
     ACCESS,
-    LOG,
+    LOGI,
     REL,
     ARI,
     UNARY,
@@ -30,7 +32,8 @@ enum NodeType
     IF_STMT,
     WHILE_STMT,
     DOWHILE_STMT,
-    FOR_STMT
+    FOR_STMT,
+    LOG
 };
 
 enum ExprType
@@ -136,6 +139,22 @@ struct Block : public Statement
     Block(Seq *s);
 };
 
+struct Include : public Node
+{
+    string name;
+
+    Include(string n);
+};
+
+struct Using : public Node
+{
+    string scope;
+    string method;
+
+    Using(string s);
+    Using(string s, string m);
+};
+
 struct Function : public Node
 {
     Fun *info; // informações da função
@@ -147,8 +166,14 @@ struct Function : public Node
 
 struct Program : public Node
 {
-    Seq *funcs;
-    Program(Seq *f);
+    Seq *seq;
+    Program(Seq *s);
+};
+
+struct Print : public Statement
+{
+    Seq *args;
+    Print(Seq *a);
 };
 
 struct Execute : public Statement

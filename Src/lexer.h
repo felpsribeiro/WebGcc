@@ -16,6 +16,9 @@ enum Tag
 	INTEGER,
 	REAL,
 	TYPE,
+	INCLUDE,
+	USING,
+	NAMESPACE,
 	TRUE,
 	FALSE,
 	MAIN,
@@ -39,6 +42,10 @@ enum Tag
 	NEQ,
 	LTE,
 	GTE,
+	LST,
+	SCOPE,
+	LIB,
+	PRINT,
 	RETURN
 };
 

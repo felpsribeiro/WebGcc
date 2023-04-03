@@ -120,12 +120,17 @@ void Traverse(Node *n)
         case PROGRAM:
         {
             fout << "(module" << endl;
-            Program *m = (Program *)n;
+            Program *p = (Program *)n;
             count->depth++;
-            Traverse(m->funcs);
+            Traverse(p->seq);
             fout << count->Tab() << "(start $main)" << endl;
             count->depth--;
             fout << ")" << endl;
+            break;
+        }
+        case COUT:
+        {
+            fout << count->Tab() << "(import \"console\" \"log\" (func $log (param i32)))" << endl << endl;
             break;
         }
         case FUNC:
@@ -214,7 +219,7 @@ void Traverse(Node *n)
             }
             break;
         }
-        case LOG:
+        case LOGI:
         {
             Logical *l = (Logical *)n;
             Traverse(l->expr1);
@@ -279,7 +284,7 @@ void Traverse(Node *n)
         {
             UnaryExpr *u = (UnaryExpr *)n;
             Traverse(u->expr);
-            
+
             switch (u->type)
             {
             case ExprType::INT:
@@ -315,6 +320,13 @@ void Traverse(Node *n)
             fout << "] ";
             break;
         }
+        case LOG:
+        {
+            Print *p = (Print *)n;
+            Traverse(p->args);
+            fout << count->Tab() << "call $log" << endl;
+            break;
+        }
         case EXECUTE:
         {
             Execute *e = (Execute *)n;
@@ -340,7 +352,7 @@ void Traverse(Node *n)
             If *i = (If *)n;
 
             Traverse(i->expr);
-            fout << count->Tab(count->depth++) << "(if" << endl;
+            fout << count->Tab(count->depth++) << "(if (result i32)" << endl;
 
             fout << count->Tab(count->depth++) << "(then" << endl;
             Traverse(i->stmt);
