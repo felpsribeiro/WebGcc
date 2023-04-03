@@ -1,0 +1,109 @@
+(* Language *)
+
+program     = {instr} ;
+instr       = include
+            # | using
+            | function ;
+
+(* Libs *)
+include     = '#include' , lib , 'using' , 'namespace' , 'std' , ';';
+lib         = '<iostream>' ;
+
+# (* Namespace definition *)
+# using       = 'using' , namespace ;
+# namespace   = 'namespace' , id;'
+#             | id , '::' , id , ';' ;
+
+(* Function *)
+function    = type , id , '(' , [param] , ')' , '{' , {stmt} , '}' ;
+
+param       = type , id , {tail}
+tail        = ',' param ;
+
+stmt        = decl , ';'
+	     | assign , ';'
+            | call , ';'
+            | 'cout' , print , ';'
+            | 'return' , operation ,';'
+            | blok ;
+
+decl        = type , id , '[' , integer , ']' , [list] ;
+            | type , id , [value] ;
+            
+list        = '=' , '{' , [items] '}' ;
+items       = operation {item} ;
+item        = ',' , operation ;
+
+value       = '=' , operation ;
+
+assign      = change_one , local
+            | local , change_one
+            | local , [oper] , '=' , operation ;
+change_one  = '++' | '--' ;
+oper        = '+' | '-'
+            | '*' | '/'
+            | '%' | '&'
+            | '|' ;
+
+print       = '<<' , operation ;
+
+block       = '{' , stmts , '}'
+            | 'if' , '(' , operation , ')' , stmts , ['else' , stmts]
+            | 'while' , '(' , operation')' , stmts
+            | 'do' , stmts , 'while' , '(' , operation , ')' , ';'
+            | 'for' , '(' , (decl | assign) , ';' , operation , ';' , assign , ')' , stmts ;
+
+local       = id , {position}
+position    = '[' , operation , ']'
+
+operation   = join , {lor}
+lor         = '||' , join , {lor}
+
+join        = equality , {land}
+land        = '&&' , equality , {land}
+
+equality    = rel , {eqdif}
+eqdif       = ('==' | '!=') , rel , {eqdif}
+
+rel         = ari , {comp}
+comp        = ['<' | '<=' | '>' | '>='] , ari , {comp}
+
+ari         = term , {oper}
+oper        = ['+' | '-'] , term , {oper}
+
+term        = unary , {calc}
+calc        = ['*' | '/' | '%'] , unary , {calc}
+
+unary       = ['!'] , unary
+            |  '-' , unary
+            | factor ;
+
+factor      = '(' , operation , ')'
+            | call
+            | local
+            | integer
+            | real
+            | 'true' | 'false' ;
+
+(* Functions Call *)
+call        = id , '(' , {args} , ')'
+args        = operation , {tailAr}
+tailAr      = ',' operation tailAr
+
+(* Numbers *)
+zero        = '0' ;
+digit       = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ;
+integer     = zero
+            | ['-'] , digit-zero , {digit} ;
+real        = integer , '.' , digit , {digit} ;
+
+(* Texts *)
+letter = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
+       | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N'
+       | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U'
+       | 'V' | 'W' | 'X' | 'Y' | 'Z' 
+       | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g'
+       | 'h' | 'i' | 'j' | 'k' | 'l' | 'm' | 'n'
+       | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u'
+       | 'v' | 'w' | 'x' | 'y' | 'z' ;
+id     = letter , { letter | '_' | digit } ;
