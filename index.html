@@ -1,0 +1,30 @@
+<!-- 
+    rode o comando no terminal "python3 -m http.server"
+    abra o navegador na porta aberta do servidor e abra este arquivo .html
+-->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Add</title>
+</head>
+
+<body>
+    <script>
+        async function run() {
+            const name = document.getElementById('input').value;
+            if (name)
+                await WebAssembly.instantiateStreaming(fetch(`./Test/${name}.wasm`), { console });
+        }
+    </script>
+
+    <div>
+        <span>Insira o nome do arquivo: </span>
+        <input id="input" type="text" onchange="run()" />
+        <span>.wasm</span>
+    </div>
+</body>
+
+</html>
