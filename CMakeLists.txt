@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(cpp2wat)
 set(CMAKE_CXX_STANDARD 17)
-set(SOURCE_FILES Src/ast.cpp Src/checker.cpp Src/lexer.cpp Src/parser.cpp Src/symtable.cpp Src/functable Src/error.cpp Src/tradutor.cpp)
+set(SOURCE_FILES Src/ast.cpp Src/checker.cpp Src/lexer.cpp Src/parserMain.cpp Src/parserExpression.cpp Src/parserStatement.cpp Src/symtable.cpp Src/functable Src/error.cpp Src/tradutor.cpp)
 add_executable(cpp2wat ${SOURCE_FILES})

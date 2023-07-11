@@ -7,3 +7,6 @@ Realese
 # WA files
 *.wat
 *.wasm
+
+# Node modules
+node_modules
