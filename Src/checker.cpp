@@ -122,6 +122,8 @@ void Traverse(Node *n)
             fout << "(module" << endl;
             Program *p = (Program *)n;
             count->depth++;
+            fout << count->Tab() << "(import \"console\" \"log\" (func $log (param i32)))" << endl;
+            fout << count->Tab() << "(memory 1)" << endl;
             Traverse(p->seq);
             fout << count->Tab() << "(start $main)" << endl;
             count->depth--;
@@ -130,7 +132,8 @@ void Traverse(Node *n)
         }
         case COUT:
         {
-            fout << count->Tab() << "(import \"console\" \"log\" (func $log (param i32)))" << endl << endl;
+            // fout << count->Tab() << "(import \"console\" \"log\" (func $log (param i32)))" << endl
+            //      << endl;
             break;
         }
         case FUNC:
@@ -182,13 +185,24 @@ void Traverse(Node *n)
         case ASSIGN:
         {
             Assign *a = (Assign *)n;
-            // não utilizo enquanto nao estou lidando com arrays
-            // Traverse(a->id);
-            Traverse(a->expr);
-            Identifier *i = (Identifier *)a->id;
-            fout << count->Tab() << "local.set $" << i->key << endl;
+
+            if (a->id->node_type == NodeType::ACCESS)
+            {
+                Access *v = (Access *)a->id;
+                Traverse(v->expr);
+                Traverse(a->expr);
+                fout << count->Tab() << "i32.store" << endl;
+            }
+            else
+            {
+                Traverse(a->expr);
+                Identifier *i = (Identifier *)a->id;
+                fout << count->Tab() << "local.set $" << i->key << endl;
+            }
             break;
         }
+        //case ASSIGN_VECTOR:
+
         case REL:
         {
             Relational *r = (Relational *)n;
@@ -314,10 +328,17 @@ void Traverse(Node *n)
         case ACCESS:
         {
             Access *a = (Access *)n;
-            Traverse(a->id);
-            fout << "[ ";
+
             Traverse(a->expr);
-            fout << "] ";
+            fout << count->Tab() << "i32.const 4" << endl;
+            fout << count->Tab() << "i32.mul" << endl;
+            if (a->addres != 0)
+            {
+                fout << count->Tab() << "i32.const " << a->addres << endl;
+                fout << count->Tab() << "i32.add" << endl;
+            }
+
+            fout << count->Tab() << "i32.load" << endl;
             break;
         }
         case LOG:

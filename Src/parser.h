@@ -25,13 +25,14 @@ private:
 	Function *Func();
 	void Params();
 	Seq *Stmts();
+
 	Statement *Stmt();
 	Statement *Decl();
-	Seq *Cout();
 	Statement *Attribution();
-	Statement *Scope();
+	Statement *NewScope();
+
 	Expression *Local();
-	Expression *Bool();
+	Expression *Operator();
 	Expression *Join();
 	Expression *Equality();
 	Expression *Rel();
@@ -41,12 +42,15 @@ private:
 	Expression *Factor();
 	Expression *Call();
 	Seq *Args();
+
 	bool Match(int tag);
+	void AllocateMemory(int type, int size);
 
 public:
 	Parser();
 	Node *Start();
 	static int LineNo();
+	static unsigned int memoryPointer;
 };
 
 #endif

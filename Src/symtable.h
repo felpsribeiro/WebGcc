@@ -12,6 +12,7 @@ struct Symbol
 	int type;
 	string name;
 	unsigned int depth;
+	unsigned int addres;
 };
 
 typedef map<string, Symbol> SymMap;

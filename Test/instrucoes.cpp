@@ -1,12 +1,14 @@
+#include <iostream>
+using namespace std;
+
 void main()
 {
-    int porta = 1;
-    int chave;
+    int chave = 4;
 
-    if (porta == 1)
-        chave = 1;
-    else if (porta == 2)
-        chave = 2;
+    if (chave == 1)
+        cout << 1;
+    else if (chave == 2)
+        cout << 2;
     else
-        chave = 3;
+        cout << chave;
 }

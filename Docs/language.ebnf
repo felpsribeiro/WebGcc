@@ -17,78 +17,78 @@ lib         = '<iostream>' ;
 (* Function *)
 function    = type , id , '(' , [param] , ')' , '{' , {stmt} , '}' ;
 
-param       = type , id , {tail}
+param       = type , id , {tail} ;
 tail        = ',' param ;
 
+# ----------- parserStatement.cpp -----------
 stmt        = decl , ';'
 	     | assign , ';'
             | call , ';'
-            | 'cout' , print , ';'
-            | 'return' , operation ,';'
-            | blok ;
+            | 'cout' , '<<' , operator , {'<<' , operator} , ';'
+            | 'return' , operator ,';'
+            | newScope ;
 
-decl        = type , id , '[' , integer , ']' , [list] ;
+decl        = type , id , position , [list]
             | type , id , [value] ;
-            
-list        = '=' , '{' , [items] '}' ;
-items       = operation {item} ;
-item        = ',' , operation ;
-
-value       = '=' , operation ;
+list        = '=' , '{' , [operato , {',' , operator}] '}' ;
+value       = '=' , operator ;
 
 assign      = change_one , local
             | local , change_one
-            | local , [oper] , '=' , operation ;
+            | local , [oper] , '=' , operator ;
 change_one  = '++' | '--' ;
 oper        = '+' | '-'
             | '*' | '/'
             | '%' | '&'
             | '|' ;
+            
+newScope    = '{' , stmt , '}'
+            | 'if' , '(' , operator , ')' , stmt , ['else' , stmt]
+            | 'while' , '(' , operator')' , stmt
+            | 'do' , stmt , 'while' , '(' , operator , ')' , ';'
+            | 'for' , '(' , (decl | assign) , ';' , operator , ';' , assign , ')' , stmt ;
+# ------------------------------------------
 
-print       = '<<' , operation ;
+# ----------- parserExpression.cpp -----------
+operator    = join , {lor} ;
+lor         = '||' , join ;
 
-block       = '{' , stmts , '}'
-            | 'if' , '(' , operation , ')' , stmts , ['else' , stmts]
-            | 'while' , '(' , operation')' , stmts
-            | 'do' , stmts , 'while' , '(' , operation , ')' , ';'
-            | 'for' , '(' , (decl | assign) , ';' , operation , ';' , assign , ')' , stmts ;
+join        = equality , {land} ;
+land        = '&&' , equality ;
 
-local       = id , {position}
-position    = '[' , operation , ']'
+equality    = rel , {eqdif} ;
+eqdif       = ('==' | '!=') , rel ;
 
-operation   = join , {lor}
-lor         = '||' , join , {lor}
+rel         = ari , {comp} ;
+comp        = ('<' | '<=' | '>' | '>=') , ari ;
 
-join        = equality , {land}
-land        = '&&' , equality , {land}
+ari         = term , {oper} ;
+oper        = ('+' | '-') , term ;
 
-equality    = rel , {eqdif}
-eqdif       = ('==' | '!=') , rel , {eqdif}
+term        = unary , {calc} ;
+calc        = ('*' | '/' | '%') , unary ;
 
-rel         = ari , {comp}
-comp        = ['<' | '<=' | '>' | '>='] , ari , {comp}
-
-ari         = term , {oper}
-oper        = ['+' | '-'] , term , {oper}
-
-term        = unary , {calc}
-calc        = ['*' | '/' | '%'] , unary , {calc}
-
-unary       = ['!'] , unary
-            |  '-' , unary
+unary       = '!' , unary
+            | '-' , unary
             | factor ;
 
-factor      = '(' , operation , ')'
+factor      = '(' , operator , ')'
             | call
             | local
             | integer
             | real
-            | 'true' | 'false' ;
+            | boolean ;
 
-(* Functions Call *)
-call        = id , '(' , {args} , ')'
-args        = operation , {tailAr}
-tailAr      = ',' operation tailAr
+call        = id , '(' , {args} , ')' ;
+args        = operator , {tailAr} ;
+tailAr      = ',' operator tailAr ;
+
+local       = id , {position} ;
+position    = '[' , operator , ']' ;
+# -----------------------------------------
+
+(* Boolean *)
+boolean     = 'true' | 'false' ;
 
 (* Numbers *)
 zero        = '0' ;

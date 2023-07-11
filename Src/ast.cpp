@@ -5,7 +5,7 @@ using std::stringstream;
 
 extern Lexer *scanner;
 
-int ConvertToExprType(string type)
+int StringToExprType(string type)
 {
     if (type == "int")
         return ExprType::INT;
@@ -16,7 +16,28 @@ int ConvertToExprType(string type)
     else if (type == "void")
         return ExprType::VOID;
     else
-        throw SyntaxError(scanner->Lineno(), "esperado um tipo válido para a função");
+    {
+        stringstream ss;
+        ss << "tipo \'" << type << "\' não reconhecido";
+        throw SyntaxError(scanner->Lineno(), ss.str());
+    }
+}
+
+string ExprTypeToString(int type)
+{
+    switch (type)
+    {
+    case ExprType::INT:
+        return "int";
+    case ExprType::FLOAT:
+        return "float";
+    case ExprType::BOOL:
+        return "bool";
+    case ExprType::VOID:
+        return "void";
+    default:
+        throw SyntaxError(scanner->Lineno(), "tipo não reconhecido");
+    }
 }
 
 // ----
@@ -106,7 +127,7 @@ Identifier::Identifier(int etype, Token *t, unsigned int d) : Expression(NodeTyp
 // Access
 // ------
 
-Access::Access(int etype, Token *t, Expression *i, Expression *e) : Expression(NodeType::ACCESS, etype, t), id(i), expr(e) {}
+Access::Access(int etype, Token *t, unsigned int a, Expression *e) : Expression(NodeType::ACCESS, etype, t), addres(a), expr(e) {}
 
 // -------
 // Logical
@@ -211,6 +232,19 @@ Assign::Assign(Expression *i, Expression *e) : Statement(NodeType::ASSIGN), id(i
            << expr->Name() << ":" << expr->Type() << ") ";
         throw SyntaxError{scanner->Lineno(), ss.str()};
     }
+}
+
+SeqAssign::SeqAssign(Seq *s) : Statement(NodeType::SEQ), seq(s)
+{
+    // // verificação de tipos
+    // if (id->type != expr->type)
+    // {
+    //     stringstream ss;
+    //     ss << "\'=\' usado com operandos de tipos diferentes ("
+    //        << id->Name() << ":" << id->Type() << ") ("
+    //        << expr->Name() << ":" << expr->Type() << ") ";
+    //     throw SyntaxError{scanner->Lineno(), ss.str()};
+    // }
 }
 
 // ----

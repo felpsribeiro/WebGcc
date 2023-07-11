@@ -1,14 +1,17 @@
+#include <iostream>
+using namespace std;
+
 void ffor()
 {
     int cont = 0;
 
     for (int i = 0; i < 5; i++)
-        cont += i;
+        cout << ++i;
 
     int aux = 0;
     for (cont = 3; cont != 0; cont--)
     {
-        aux += 5;
+        cout << ++aux;
     }
 }
 

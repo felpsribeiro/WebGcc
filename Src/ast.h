@@ -45,7 +45,8 @@ enum ExprType
 };
 
 // retorna o equivalente ExprType para o tipo em string
-int ConvertToExprType(string type);
+int StringToExprType(string type);
+string ExprTypeToString(int type);
 
 struct Node
 {
@@ -94,9 +95,9 @@ struct Identifier : public Expression
 
 struct Access : public Expression
 {
-    Expression *id;
+    unsigned int addres;
     Expression *expr;
-    Access(int etype, Token *t, Expression *i, Expression *e);
+    Access(int etype, Token *t, unsigned int a, Expression *e);
 };
 
 struct Logical : public Expression
@@ -187,6 +188,12 @@ struct Assign : public Statement
     Expression *id;
     Expression *expr;
     Assign(Expression *i, Expression *e);
+};
+
+struct SeqAssign : public Statement
+{
+    Seq *seq;
+    SeqAssign(Seq *s);
 };
 
 struct Return : public Statement
