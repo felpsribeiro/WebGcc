@@ -63,7 +63,7 @@ Include *Parser::Incl()
 
 Function *Parser::Func()
 {
-    // func -> type id(params) { scope }
+    // func = type , id , '(' , [param] , ')' , '{' , {stmt} , '}' ;
 
     // captura nome do tipo de retorno
     int type = StringToExprType(lookahead->lexeme);
@@ -86,9 +86,6 @@ Function *Parser::Func()
 
     if (!Match(')'))
         throw SyntaxError(scanner->Lineno(), "\')\' esperado");
-
-    if (name.compare("main") == 0)
-        type = ExprType::VOID;
 
     // cria símbolo Fun
     funcInfo = new Fun(type, name, symTable->Table());
@@ -123,15 +120,11 @@ Function *Parser::Func()
 
 void Parser::Params()
 {
-    // params  -> param tail
-    //          | empty
-    // tail    -> , param tail
-    //          | empty
+    // param  = type , id , ['[' , ']'] , {tail} ;
+    // tail   = ',' param ;
 
     while (lookahead->tag != ')')
     {
-        // params  -> param tail
-
         int type = StringToExprType(lookahead->lexeme);
         if (!Match(Tag::TYPE))
             throw SyntaxError(scanner->Lineno(), "esperado um tipo de variável válido.");
@@ -140,7 +133,20 @@ void Parser::Params()
         if (!Match(Tag::ID))
             throw SyntaxError(scanner->Lineno(), "esperado um nome de variável válido.");
 
-        if (!symTable->Insert(name, Symbol{type, name}))
+        Symbol sym{type, name, SymTable::depth};
+
+        if (Match('['))
+        {
+            sym.isArray = true;
+            if (!Match(']'))
+            {
+                stringstream ss;
+                ss << "esperado ] no lugar de  \'" << lookahead->lexeme << "\'";
+                throw SyntaxError{scanner->Lineno(), ss.str()};
+            }
+        }
+
+        if (!symTable->Insert(name, sym))
         {
             // a inserção falha quando a variável já está na tabela
             stringstream ss;
@@ -216,15 +222,5 @@ Node *Parser::Start()
     // ------------------------------------
 
     Program *prog = Prog();
-
-    // verifica se a função main foi declarada
-    Fun *f = funcTable->Find("main");
-    if (!f)
-    {
-        stringstream ss;
-        ss << "função 'main' não foi declarada";
-        throw SyntaxError{scanner->Lineno(), ss.str()};
-    }
-
     return prog;
 }

@@ -17,10 +17,12 @@ lib         = '<iostream>' ;
 (* Function *)
 function    = type , id , '(' , [param] , ')' , '{' , {stmt} , '}' ;
 
-param       = type , id , {tail} ;
+param       = type , id , ['[' , ']'] , {tail} ;
 tail        = ',' param ;
 
-# ----------- parserStatement.cpp -----------
+# -------------------------------------------
+# parserStatement.cpp
+# -------------------------------------------
 stmt        = decl , ';'
 	     | assign , ';'
             | call , ';'
@@ -49,7 +51,9 @@ newScope    = '{' , stmt , '}'
             | 'for' , '(' , (decl | assign) , ';' , operator , ';' , assign , ')' , stmt ;
 # ------------------------------------------
 
-# ----------- parserExpression.cpp -----------
+# -------------------------------------------
+# parserExpression.cpp
+# -------------------------------------------
 operator    = join , {lor} ;
 lor         = '||' , join ;
 
@@ -81,7 +85,7 @@ factor      = '(' , operator , ')'
 
 call        = id , '(' , {args} , ')' ;
 args        = operator , {tailAr} ;
-tailAr      = ',' operator tailAr ;
+tailAr      = ',' operator ;
 
 local       = id , {position} ;
 position    = '[' , operator , ']' ;
@@ -92,10 +96,11 @@ boolean     = 'true' | 'false' ;
 
 (* Numbers *)
 zero        = '0' ;
-digit       = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ;
+digit       = '0' | '1' | '2' | '3' | '4' 
+            | '5' | '6' | '7' | '8' | '9' ;
 integer     = zero
             | ['-'] , digit-zero , {digit} ;
-real        = integer , '.' , digit , {digit} ;
+real        = integer , '.' , {digit} ;
 
 (* Texts *)
 letter = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'

@@ -51,6 +51,7 @@ string ExprTypeToString(int type);
 struct Node
 {
     int node_type;
+
     Node();
     Node(int t);
 };
@@ -59,6 +60,7 @@ struct Seq : public Node
 {
     Node *elemt;
     Seq *elemts;
+
     Seq(Node *e);
     Seq(Node *e, Seq *ee);
 };
@@ -95,15 +97,17 @@ struct Identifier : public Expression
 
 struct Access : public Expression
 {
-    unsigned int addres;
+    Identifier *addres;
     Expression *expr;
-    Access(int etype, Token *t, unsigned int a, Expression *e);
+
+    Access(int etype, Token *t, Identifier *a, Expression *e);
 };
 
 struct Logical : public Expression
 {
     Expression *expr1;
     Expression *expr2;
+
     Logical(Token *t, Expression *e1, Expression *e2);
 };
 
@@ -111,6 +115,7 @@ struct Relational : public Expression
 {
     Expression *expr1;
     Expression *expr2;
+
     Relational(Token *t, Expression *e1, Expression *e2);
 };
 
@@ -118,12 +123,14 @@ struct Arithmetic : public Expression
 {
     Expression *expr1;
     Expression *expr2;
+
     Arithmetic(int etype, Token *t, Expression *e1, Expression *e2);
 };
 
 struct UnaryExpr : public Expression
 {
     Expression *expr;
+
     UnaryExpr(int etype, Token *t, Expression *e);
 };
 
@@ -137,6 +144,7 @@ struct CallFunc : public Expression
 struct Block : public Statement
 {
     Seq *seq;
+
     Block(Seq *s);
 };
 
@@ -168,18 +176,21 @@ struct Function : public Node
 struct Program : public Node
 {
     Seq *seq;
+
     Program(Seq *s);
 };
 
 struct Print : public Statement
 {
     Seq *args;
+
     Print(Seq *a);
 };
 
 struct Execute : public Statement
 {
     Expression *func;
+
     Execute(Expression *f);
 };
 
@@ -187,18 +198,21 @@ struct Assign : public Statement
 {
     Expression *id;
     Expression *expr;
+
     Assign(Expression *i, Expression *e);
 };
 
 struct SeqAssign : public Statement
 {
     Seq *seq;
+
     SeqAssign(Seq *s);
 };
 
 struct Return : public Statement
 {
     Expression *expr;
+
     Return(Expression *e);
 };
 
@@ -207,6 +221,7 @@ struct If : public Statement
     Expression *expr;
     Seq *stmt;
     Seq *stmtElse;
+
     If(Expression *e, Seq *s, Seq *ss);
 };
 
@@ -214,6 +229,7 @@ struct While : public Statement
 {
     Expression *expr;
     Seq *stmt;
+
     While(Expression *e, Seq *s);
 };
 
@@ -221,6 +237,7 @@ struct DoWhile : public Statement
 {
     Seq *stmt;
     Expression *expr;
+
     DoWhile(Seq *s, Expression *e);
 };
 
@@ -230,6 +247,7 @@ struct For : public Statement
     Expression *cond;
     Statement *icrmt;
     Seq *stmt;
+
     For(Statement *ct, Expression *co, Statement *ic, Seq *s);
 };
 

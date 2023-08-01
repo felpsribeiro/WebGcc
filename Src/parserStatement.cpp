@@ -117,9 +117,8 @@ Statement *Parser::Stmt()
 Statement *Parser::Decl()
 {
     // decl   = type , id , position , [list]
-    //        | type , id , [value] ;
+    //        | type , id , ['=' , operator] ;
     // list   = '=' , '{' , [operato , {',' , operator}] '}' ;
-    // value  = '=' , operator ;
 
     Statement *stmt = nullptr;
 
@@ -144,7 +143,7 @@ Statement *Parser::Decl()
         int size = stoi(sizeString);
 
         // cria símbolo
-        Symbol s{type, name, SymTable::depth, memoryPointer};
+        Symbol s{type, name, SymTable::depth, true};
 
         // insere variável na tabela de símbolos
         if (!symTable->Insert(name, s))
@@ -158,6 +157,12 @@ Statement *Parser::Decl()
         for (int i = 0; i < SymTable::depth; i++)
             name += '_';
         funcInfo->InsertLocal(name, s);
+
+        Expression *left = new Identifier(type, new Token{Tag::ID, name});
+        Expression *right = new Constant(1, new Token{Tag::INTEGER, std::to_string(memoryPointer)});
+        stmt = new Assign(left, right);
+
+        Seq *seq = new Seq(stmt, nullptr);
 
         if (!Match(']'))
         {
@@ -178,13 +183,12 @@ Statement *Parser::Decl()
 
             if (lookahead->tag != '}')
             {
-                Seq *seq = nullptr;
-
                 unsigned int aux = 0;
+                Identifier *addres = new Identifier(NodeType::CONSTANT, new Token{Tag::INTEGER, std::to_string(memoryPointer)});
                 do
                 {
                     Expression *exp = new Expression(NodeType::CONSTANT, ExprType::INT, new Token{Tag::INTEGER, std::to_string(memoryPointer + aux * 4)});
-                    Expression *left = new Access(type, new Token{Tag::ID, name}, memoryPointer, exp);
+                    Expression *left = new Access(type, new Token{Tag::ID, name}, addres, exp);
                     Expression *right = Operator();
                     stmt = new Assign(left, right);
                     seq = new Seq(stmt, seq);
@@ -197,8 +201,6 @@ Statement *Parser::Decl()
                         throw SyntaxError{scanner->Lineno(), ss.str()};
                     }
                 } while (Match(','));
-
-                stmt = new SeqAssign(seq);
             }
 
             if (!Match('}'))
@@ -208,6 +210,7 @@ Statement *Parser::Decl()
                 throw SyntaxError{scanner->Lineno(), ss.str()};
             };
 
+            stmt = new SeqAssign(seq);
             AllocateMemory(type, size);
         }
     }
@@ -568,9 +571,8 @@ Statement *Parser::NewScope()
             throw SyntaxError{scanner->Lineno(), ss.str()};
         }
 
-        if (lookahead->tag == '{')
+        if (Match('{'))
         {
-            Match('{');
             block = new For(ctrl, cond, icrmt, Stmts());
             if (!Match('}'))
             {

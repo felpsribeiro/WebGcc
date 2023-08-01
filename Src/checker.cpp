@@ -125,7 +125,6 @@ void Traverse(Node *n)
             fout << count->Tab() << "(import \"console\" \"log\" (func $log (param i32)))" << endl;
             fout << count->Tab() << "(memory 1)" << endl;
             Traverse(p->seq);
-            fout << count->Tab() << "(start $main)" << endl;
             count->depth--;
             fout << ")" << endl;
             break;
@@ -201,8 +200,6 @@ void Traverse(Node *n)
             }
             break;
         }
-        //case ASSIGN_VECTOR:
-
         case REL:
         {
             Relational *r = (Relational *)n;
@@ -332,12 +329,8 @@ void Traverse(Node *n)
             Traverse(a->expr);
             fout << count->Tab() << "i32.const 4" << endl;
             fout << count->Tab() << "i32.mul" << endl;
-            if (a->addres != 0)
-            {
-                fout << count->Tab() << "i32.const " << a->addres << endl;
-                fout << count->Tab() << "i32.add" << endl;
-            }
-
+            Traverse(a->addres);
+            fout << count->Tab() << "i32.add" << endl;
             fout << count->Tab() << "i32.load" << endl;
             break;
         }

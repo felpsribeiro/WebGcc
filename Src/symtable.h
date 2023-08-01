@@ -3,8 +3,8 @@
 
 #include <string>
 #include <map>
-using std::string;
 using std::map;
+using std::string;
 
 // modelo para símbolos
 struct Symbol
@@ -12,7 +12,10 @@ struct Symbol
 	int type;
 	string name;
 	unsigned int depth;
-	unsigned int addres;
+	bool isArray;
+
+	Symbol(int t, string n, unsigned int d);
+	Symbol(int t, string n, unsigned int d, bool a);
 };
 
 typedef map<string, Symbol> SymMap;
@@ -32,7 +35,7 @@ public:
 	bool Insert(string s, Symbol symb);
 	Symbol *Find(string s);
 	SymMap Table() { return table; };
-	
+
 	static unsigned int depth;
 };
 

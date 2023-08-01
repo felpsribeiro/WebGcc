@@ -2,6 +2,9 @@
 
 unsigned int SymTable::depth = 0;
 
+Symbol::Symbol(int t, string n, unsigned int d) : type(t), name(n), depth(d), isArray(false) {}
+Symbol::Symbol(int t, string n, unsigned int d, bool a) : type(t), name(n), depth(d), isArray(a) {}
+
 // construtor para a primeira tabela
 SymTable::SymTable() : prev(nullptr)
 {

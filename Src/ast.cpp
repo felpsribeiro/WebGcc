@@ -127,7 +127,7 @@ Identifier::Identifier(int etype, Token *t, unsigned int d) : Expression(NodeTyp
 // Access
 // ------
 
-Access::Access(int etype, Token *t, unsigned int a, Expression *e) : Expression(NodeType::ACCESS, etype, t), addres(a), expr(e) {}
+Access::Access(int etype, Token *t, Identifier *a, Expression *e) : Expression(NodeType::ACCESS, etype, t), addres(a), expr(e) {}
 
 // -------
 // Logical

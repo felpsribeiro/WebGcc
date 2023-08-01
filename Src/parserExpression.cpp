@@ -298,7 +298,14 @@ Expression *Parser::Local()
         // position  = '[' , operator , ']' ;
         if (Match('['))
         {
-            expr = new Access(s->type, new Token{*lookahead}, s->addres, Operator());
+            if (!s->isArray)
+            {
+                stringstream ss;
+                ss << "variável \"" << s->name << "\" não é um array";
+                throw SyntaxError{scanner->Lineno(), ss.str()};
+            }
+
+            expr = new Access(s->type, expr->token, (Identifier *)expr, Operator());
 
             if (!Match(']'))
             {
@@ -320,9 +327,9 @@ Expression *Parser::Local()
 
 Expression *Parser::Call()
 {
-    // call    = id , '(' , {args} , ')'
-    // args    = operator , {tailAr}
-    // tailAr  = ',' operator tailAr
+    // call    = id , '(' , {args} , ')' ;
+    // args    = operator , {tailAr} ;
+    // tailAr  = ',' operator ;
 
     string name{lookahead->lexeme};
     Match(Tag::ID);
