@@ -195,8 +195,9 @@ Expression *Parser::Unary()
 Expression *Parser::Factor()
 {
     // factor  = '(' , operator , ')'
+    //         | change_one local
     //         | call
-    //         | local
+    //         | local {change_one}
     //         | integer
     //         | real
     //         | boolean ;
@@ -219,14 +220,48 @@ Expression *Parser::Factor()
         break;
     }
 
+    // factor = change_one local
+    case Tag::PLUSPLUS:
+    case Tag::LESSLESS:
+    {
+        Token tokenAssignment = *lookahead;
+        Match(lookahead->tag);
+
+        expr = Local();
+
+        Expression *constant = new Constant(ExprType::INT, new Token{'1'});
+        Expression *right = new Arithmetic(expr->type, new Token(tokenAssignment), expr, constant);
+        Assign *assign = new Assign(expr, right);
+
+        expr = new AssignPlusExpr(assign, expr);
+
+        break;
+    }
+
     case Tag::ID:
     {
         // factor = call
         if (scanner->Peek() == '(')
             expr = Call();
-        // factor = local
+
+        // factor = local {change_one}
         else
+        {
             expr = Local();
+
+            if (lookahead->tag == Tag::PLUSPLUS || lookahead->tag == Tag::LESSLESS)
+            {
+                Token tokenAssignment = *lookahead;
+                Match(lookahead->tag);
+
+                Expression *constant = new Constant(ExprType::INT, new Token{'1'});
+                Expression *right = new Arithmetic(expr->type, new Token(tokenAssignment), expr, constant);
+                Assign *assign = new Assign(expr, right);
+
+                expr = new ExprPlusAssign(expr, assign);
+            }
+        }
+
         break;
     }
 
@@ -276,10 +311,10 @@ Expression *Parser::Factor()
 
 Expression *Parser::Local()
 {
-    // local     = id , {position} ;
+    // local     = id , {position}
     // position  = '[' , operator , ']' ;
 
-    // local = id , {position} ;
+    // local     = id , {position}
     if (lookahead->tag == Tag::ID)
     {
         // verifica se a variável existe na tabela de varaiveis

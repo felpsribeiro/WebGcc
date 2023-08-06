@@ -129,6 +129,18 @@ Identifier::Identifier(int etype, Token *t, unsigned int d) : Expression(NodeTyp
 
 Access::Access(int etype, Token *t, Identifier *a, Expression *e) : Expression(NodeType::ACCESS, etype, t), addres(a), expr(e) {}
 
+// --------------
+// ExprPlusAssign
+// --------------
+
+ExprPlusAssign::ExprPlusAssign(Expression *e, Assign *a) : Expression(NodeType::EXPR_ASSIGN, e->type, e->token), expr(e), assign(a) {}
+
+// --------------
+// AssignPlusExpr
+// --------------
+
+AssignPlusExpr::AssignPlusExpr(Assign *a, Expression *e) : Expression(NodeType::ASSIGN_EXPR, e->type, e->token), assign(a), expr(e) {}
+
 // -------
 // Logical
 // -------

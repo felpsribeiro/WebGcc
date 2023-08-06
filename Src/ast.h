@@ -33,7 +33,9 @@ enum NodeType
     WHILE_STMT,
     DOWHILE_STMT,
     FOR_STMT,
-    LOG
+    LOG,
+    EXPR_ASSIGN,
+    ASSIGN_EXPR,
 };
 
 enum ExprType
@@ -200,6 +202,22 @@ struct Assign : public Statement
     Expression *expr;
 
     Assign(Expression *i, Expression *e);
+};
+
+struct ExprPlusAssign : public Expression
+{
+    Expression *expr;
+    Assign *assign;
+
+    ExprPlusAssign(Expression *e, Assign *a);
+};
+
+struct AssignPlusExpr : public Expression
+{
+    Assign *assign;
+    Expression *expr;
+
+    AssignPlusExpr(Assign *a, Expression *e);
 };
 
 struct SeqAssign : public Statement

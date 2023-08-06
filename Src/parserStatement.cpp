@@ -247,8 +247,8 @@ Statement *Parser::Decl()
 Statement *Parser::Attribution()
 {
     // assign -> plusplus local
-    //        | local plusplus
-    //        | local oper = bool
+    //         | local plusplus
+    //         | local oper = bool
 
     Statement *stmt = nullptr;
 

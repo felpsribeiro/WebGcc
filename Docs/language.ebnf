@@ -77,11 +77,12 @@ unary       = '!' , unary
             | factor ;
 
 factor      = '(' , operator , ')'
+            | change_one local
             | call
-            | local
+            | local {change_one} 
+            | boolean
             | integer
-            | real
-            | boolean ;
+            | real ;
 
 call        = id , '(' , {args} , ')' ;
 args        = operator , {tailAr} ;
