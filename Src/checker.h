@@ -9,15 +9,12 @@ string ConvertType(int);
 void TestLexer();
 void TestParser(Node *, string filename);
 
-struct InstructionCounter
+struct Counter
 {
-    unsigned int block;
-    unsigned int loop;
-    unsigned int depth;
-
-    InstructionCounter();
-    string Tab();
-    string Tab(unsigned int d);
+    static unsigned int block;
+    static unsigned int loop;
+    static unsigned int depth;
+    static void ftab(int add);
 };
 
 #endif
