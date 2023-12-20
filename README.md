@@ -1,3 +1,3 @@
-# cpp2wat
+# WebGcc
 
-Converter .cpp (C++) for .wat (WebAssembly)
+Compile .cpp (C++) for .wasm (WebAssembly)
