@@ -1,9 +1,0 @@
-{
-  "dependencies": {
-    "benchmark": "^2.1.4",
-    "node-fetch": "^3.3.1"
-  },
-  "devDependencies": {
-    "benchmarkify": "^3.0.0"
-  }
-}
